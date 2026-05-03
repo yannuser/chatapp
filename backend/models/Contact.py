@@ -1,6 +1,7 @@
-from mongoengine import Document, StringField, EmailField, DateField, DateTimeField
-from datetime import datetime, timezone
+from mongoengine import Document, StringField, EmailField, DateTimeField, DateField, ReferenceField
+from  datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
+import User
 import re
 
 def check_birthdate(given_date):
@@ -13,32 +14,22 @@ def check_password(given_pwd):
 
     if not re.findall(pattern, given_pwd):
         raise ValueError("Password not right")
-    
-def check_username(given_username):
-    pattern = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
 
-    if not re.findall(pattern, given_username):
-        raise ValueError("Username is not valid")
-
-class User(Document):
+class Contact(Document):
+    user = ReferenceField(User, required=True)
     email = EmailField(required=True, unique=True)
     first_name = StringField(required=True, max_length=250)
     last_name = StringField(required=True, max_length=250)
     birthdate = DateField(required=True, validation=check_birthdate)
-    username = StringField(required=True, unique=True, max_length=150, validation=check_username)
+    username = StringField(required=True, unique=True, max_length=150)
     password = StringField(required=True, validation=check_password)
     created_at = DateTimeField(default= datetime.now(timezone.utc))
     updated_at = DateTimeField()
 
-    def clean(self):
-        if not self.created_at:
-            self.created_at = datetime.now(timezone.utc)
-        self.updated_at = datetime.now(timezone.utc)
-
     meta = {
-        "collection" : "users",
+        "collection" : "conversations",
         "ordering": ["-created_at"],
-        "indexes": ["email", "username", "first_name", "first_name"],
+        "indexes": ["members"],
         "allow_inheritance": False,
         "strict": True,
     }

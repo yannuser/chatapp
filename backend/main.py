@@ -1,13 +1,16 @@
 from fastapi import FastAPI
-from mongoengine import connect
-from dotenv import load_dotenv
-import os
+from core.database import connect_db, disconnect_db
+from backend.routers import *
 
-load_dotenv()
 
 app = FastAPI()
 
-connect(
-    db="chatapp",
-    host=os.getenv("DATABASE_URL")
-)
+@app.on_event("startup")
+def startapp():
+    connect_db()
+
+@app.on_event("shutdown")
+def shutdown():
+    disconnect_db()
+
+# app.include_router()
