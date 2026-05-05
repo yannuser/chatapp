@@ -1,24 +1,24 @@
 from mongoengine import Document, StringField,  DateTimeField, ReferenceField, CASCADE
 from datetime import datetime, timezone
-import User
-import Group
+import backend.models.user as user
+import backend.models.group as group
 
 
 class GroupMessage(Document):
+    group = ReferenceField(group, required=True)
     content = StringField(required=True, max_length=3000)
+    sender = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
     sent_at = DateTimeField(default= datetime.now(timezone.utc))
-    updated_at = DateTimeField()
-    sender = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)
-    conversation = ReferenceField(Group, required=True)
+    updated_at = DateTimeField(required=False)
 
     def clean(self):
-        if not self.created_at:
-            self.created_at = datetime.now(timezone.utc)
+        if not self.sent_at:
+            self.sent_at = datetime.now(timezone.utc)
         self.updated_at = datetime.now(timezone.utc)
 
     meta = {
         "collection": "messages",
-        "ordering": ["-created_at"],
+        "ordering": ["-sent_at"],
         "indexes": ["content"],
         "allow_inheritance": False,
         "strict": False,
