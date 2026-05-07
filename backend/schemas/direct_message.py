@@ -2,14 +2,15 @@ from pydantic import BaseModel, Field
 from backend.schemas.conversation import ConversationResponse
 from backend.schemas.user import UserResponse
 from datetime import datetime, timezone
+from typing import Optional
 
 
 class DirectMessageSave(BaseModel):
     content : str = Field(max_length=3000)
     sender : UserResponse
     conversation : ConversationResponse
-    sent_at : datetime = Field(default=datetime.now(timezone.utc))
-    updated_at : datetime | None
+    created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at : Optional[datetime] = None
 
 class DirectMessageResponse(BaseModel):
     content : str
