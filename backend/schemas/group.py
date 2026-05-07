@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from backend.schemas.user import UserResponse
 from datetime import datetime, timezone
 
@@ -8,9 +8,17 @@ class GroupCreate(BaseModel):
     description : str | None  = Field(max_length=5000)
     members : List[UserResponse]
     creator : UserResponse
-    created_at : datetime = Field(default=datetime.now(timezone.utc))
-    updated_at : datetime | None
-    
+    created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at : Optional[datetime] = None
+
+
+class GroupUpdate(BaseModel):
+    title : str = Field(max_length=100, default="New Group")
+    description : str | None  = Field(max_length=5000)
+    members : List[UserResponse]
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class GroupResponse(BaseModel):
     title : str
     description : str | None

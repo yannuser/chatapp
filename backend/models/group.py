@@ -1,6 +1,5 @@
 from mongoengine import Document, StringField, ReferenceField, CASCADE, ListField, DateTimeField
 import backend.models.user as user
-import backend.models.direct_message as direct_message
 from datetime import datetime, timezone
 
 

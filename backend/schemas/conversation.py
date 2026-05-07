@@ -10,11 +10,6 @@ class ConversationCreate(BaseModel):
     updated_at : Optional[datetime] = None
 
 
-class ConversationUpdate(BaseModel):
-    members : Optional[List[UserResponse]] = Field(max_length=2)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
 class ConversationResponse(BaseModel):
     members : List[UserResponse]
     created_at : datetime

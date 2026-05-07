@@ -12,6 +12,12 @@ class DirectMessageSave(BaseModel):
     created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at : Optional[datetime] = None
 
+
+class DirectMessageUpdate(BaseModel):
+    content : str = Field(max_length=3000)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class DirectMessageResponse(BaseModel):
     content : str
     sender : UserResponse

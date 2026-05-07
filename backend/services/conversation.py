@@ -1,8 +1,5 @@
-from mongoengine.errors import DoesNotExist
-from pydantic import EmailStr
 from backend.models.conversation import Conversation
-from backend.schemas.conversation import ConversationCreate, ConversationUpdate
-from passlib.context import CryptContext
+from backend.schemas.conversation import ConversationCreate
 from fastapi import HTTPException
 
 
