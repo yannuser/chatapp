@@ -27,7 +27,6 @@ def get_by_title(group_name : str, user_id : str) -> Group:
     return groups
 
 
-
 def update_groupe(group_id : str, data : GroupUpdate) -> Group:
     group = Group.objects(id=group_id).first()  # type: ignore
 
@@ -40,4 +39,13 @@ def update_groupe(group_id : str, data : GroupUpdate) -> Group:
     group.reload()
     return group
 
+def delete_group(group_id : str, user_id : str) -> None:
+    group = Group.objects(id=group_id).first()  # type: ignore
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    if not user_id == group.creator:
+        raise HTTPException(status_code=403, detail="You do not have the rights to do that")
+
+    group.delete()
 
