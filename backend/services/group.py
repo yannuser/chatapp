@@ -1,11 +1,12 @@
 from backend.models.group import Group
-from  backend.schemas.group import GroupCreate, GroupUpdate, GroupResponse
+from  backend.schemas.group import GroupCreate, GroupUpdate
 from fastapi import HTTPException
 
 
 def create_groupe(data : GroupCreate) -> Group:
     group =  Group(title=data.title, description=data.description, 
                    members=data.members, creator=data.creator)
+    group.save()
     return group
 
 
@@ -38,6 +39,7 @@ def update_groupe(group_id : str, data : GroupUpdate) -> Group:
     group.update(data)
     group.reload()
     return group
+
 
 def delete_group(group_id : str, user_id : str) -> None:
     group = Group.objects(id=group_id).first()  # type: ignore

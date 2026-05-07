@@ -1,10 +1,11 @@
 from backend.models.direct_message import DirectMessage
-from backend.schemas.direct_message import DirectMessageResponse, DirectMessageSave, DirectMessageUpdate
+from backend.schemas.direct_message import DirectMessageSave, DirectMessageUpdate
 from fastapi import HTTPException
 
 
 def create_direct_message(data : DirectMessageSave) -> DirectMessage:
     msg = DirectMessage(content=data.content, sender=data.sender, conversation=data.conversation)
+    msg.save()
     return msg
 
 
