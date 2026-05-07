@@ -8,7 +8,7 @@ class Group(Document):
     description = StringField(max_length=5000, required=True)
     members = ListField(ReferenceField(user, reverse_delete_rule=CASCADE))
     creator = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
-    created_at = DateTimeField(default = datetime.now(timezone.utc))
+    created_at = DateTimeField(default =lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 
     def clean(self):

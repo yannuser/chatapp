@@ -8,7 +8,7 @@ class GroupMessage(Document):
     group = ReferenceField(group, required=True)
     content = StringField(required=True, max_length=3000)
     sender = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
-    sent_at = DateTimeField(default= datetime.now(timezone.utc))
+    sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 
     def clean(self):
