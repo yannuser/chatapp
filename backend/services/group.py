@@ -1,5 +1,5 @@
-from backend.models.group import Group
-from  backend.schemas.group import GroupCreate, GroupUpdate
+from models.group import Group
+from schemas.group import GroupCreate, GroupUpdate
 from fastapi import HTTPException
 
 

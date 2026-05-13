@@ -1,5 +1,5 @@
-from backend.models.group_message import GroupMessage
-from backend.schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse
+from models.group_message import GroupMessage
+from schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse
 from fastapi import HTTPException
 
 

@@ -1,6 +1,6 @@
 from mongoengine import CASCADE, PULL, Document, ListField, ReferenceField, StringField, DateTimeField, ValidationError
-import backend.models.direct_message as direct_message
-import backend.models.user as user
+import models.direct_message as direct_message
+import models.user as user
 from datetime import datetime, timezone
 
 

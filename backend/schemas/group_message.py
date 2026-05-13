@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
-from backend.schemas.user import UserResponse
-from backend.schemas.group import GroupResponse
+from schemas.user import UserResponse
+from schemas.group import GroupResponse
 from datetime import datetime, timezone
 from typing import Optional
 

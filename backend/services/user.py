@@ -1,6 +1,6 @@
 from mongoengine.errors import DoesNotExist
-from backend.models.user import User
-from backend.schemas.user import UserCreate, UserUpdate
+from models.user import User
+from schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException
 from passlib.context import CryptContext
 

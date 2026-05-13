@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from backend.schemas.user import UserResponse
+from schemas.user import UserResponse
 from datetime import datetime, timezone
 
 class GroupCreate(BaseModel):

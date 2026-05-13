@@ -1,5 +1,5 @@
-from backend.models.conversation import Conversation
-from backend.schemas.conversation import ConversationCreate
+from models.conversation import Conversation
+from schemas.conversation import ConversationCreate
 from fastapi import HTTPException
 
 

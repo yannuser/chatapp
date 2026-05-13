@@ -1,5 +1,5 @@
 from mongoengine import Document, StringField, ReferenceField, CASCADE, ListField, DateTimeField
-import backend.models.user as user
+import models.user as user
 from datetime import datetime, timezone
 
 

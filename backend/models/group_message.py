@@ -1,7 +1,7 @@
 from mongoengine import Document, StringField,  DateTimeField, ReferenceField, CASCADE
 from datetime import datetime, timezone
-import backend.models.user as user
-import backend.models.group as group
+import models.user as user
+import models.group as group
 
 
 class GroupMessage(Document):

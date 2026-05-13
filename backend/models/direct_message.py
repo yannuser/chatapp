@@ -1,12 +1,12 @@
 from mongoengine import Document, StringField, DateTimeField, ReferenceField, CASCADE
 from datetime import datetime, timezone
-import backend.models.user as user
-import backend.models.conversation as conversation
+import models.user as User
+import models.conversation as Conversation
 
 class DirectMessage(Document):
     content = StringField(required=True, max_length=3000)
-    sender = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
-    conversation = ReferenceField(conversation, required=True)
+    sender = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)
+    linked_conversation = ReferenceField(Conversation, required=True)
     sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 

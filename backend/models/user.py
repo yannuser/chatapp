@@ -1,7 +1,7 @@
 from mongoengine import Document, StringField, EmailField, DateField, DateTimeField, ListField, ReferenceField
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
-import backend.models.contact as contact
+import models.contact as contact
 import re
 
 
