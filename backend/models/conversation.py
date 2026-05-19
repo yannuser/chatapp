@@ -1,6 +1,6 @@
 from mongoengine import CASCADE, PULL, Document, ListField, ReferenceField, StringField, DateTimeField, ValidationError
 import models.direct_message as direct_message
-import models.user as user
+import models.user as User
 from datetime import datetime, timezone
 
 
@@ -17,7 +17,7 @@ class SizedListField(ListField):
             raise ValidationError(f'List exceeds max_length of {self.max_length}')
 
 class Conversation(Document):
-    members = SizedListField(ReferenceField(user, reverse_delete_rule=CASCADE), max_length=2)
+    members = SizedListField(ReferenceField("User", reverse_delete_rule=CASCADE), max_length=2)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 

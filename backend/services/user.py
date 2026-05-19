@@ -9,16 +9,23 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_user(data: UserCreate) -> User:
-    if User.objects(email=data.email).first(): # type: ignore
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if User.objects(username=data.username).first(): # type: ignore
-        raise HTTPException(status_code=400, detail="Username already taken")
+    try:
+        if User.objects(email=data.email).first(): # type: ignore
+            raise HTTPException(status_code=400, detail="Email already registered")
+        if User.objects(username=data.username).first(): # type: ignore
+            raise HTTPException(status_code=400, detail="Username already taken")
 
-    user = User(email=data.email, first_name=data.first_name, last_name=data.last_name, 
-                birthdate=data.birthdate, username=data.username, password=pwd_context.hash(data.password.get_secret_value()),
-                )
-    user.save()
-    return user
+        user = User(email=data.email, first_name=data.first_name, last_name=data.last_name, 
+                    birthdate=data.birthdate, username=data.username, password=pwd_context.hash(data.password.get_secret_value()),
+                    )
+        
+        user.save()
+        print("SAVED USER:", user.to_json())
+        return user
+    
+    except Exception as e:
+        print("SAVE ERROR:", str(e))
+        raise
 
 
 def update_user(user_id: str, data: UserUpdate) -> User:

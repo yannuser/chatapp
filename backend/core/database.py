@@ -8,6 +8,9 @@ def connect_db():
         host=settings.MONGO_URI,
         alias="default"
     )
+    print("CONNECTED TO MONGO")
+    print(settings.MONGO_URI)
+    print(settings.MONGO_DB)
 
 
 def disconnect_db():

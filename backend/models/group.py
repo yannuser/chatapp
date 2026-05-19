@@ -1,13 +1,13 @@
 from mongoengine import Document, StringField, ReferenceField, CASCADE, ListField, DateTimeField
-import models.user as user
+import models.user as User
 from datetime import datetime, timezone
 
 
 class Group(Document):
     title = StringField(max_length=100, default="New Group")
     description = StringField(max_length=5000, required=True)
-    members = ListField(ReferenceField(user, reverse_delete_rule=CASCADE))
-    creator = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
+    members = ListField(ReferenceField("User", reverse_delete_rule=CASCADE))
+    creator = ReferenceField("User", reverse_delete_rule=CASCADE, required=True)
     created_at = DateTimeField(default =lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 

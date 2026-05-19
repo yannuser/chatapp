@@ -1,13 +1,13 @@
 from mongoengine import Document, StringField,  DateTimeField, ReferenceField, CASCADE
 from datetime import datetime, timezone
-import models.user as user
-import models.group as group
+import models.user as User
+import models.group as Group
 
 
 class GroupMessage(Document):
-    group = ReferenceField(group, required=True)
+    group = ReferenceField("Group", required=True)
     content = StringField(required=True, max_length=3000)
-    sender = ReferenceField(user, reverse_delete_rule=CASCADE, required=True)
+    sender = ReferenceField("User", reverse_delete_rule=CASCADE, required=True)
     sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
 

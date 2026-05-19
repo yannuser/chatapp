@@ -6,8 +6,7 @@ import re
 
 
 USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
-PASSWORD_PATTERN = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-
+PASSWORD_PATTERN = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$"
 
 class UserCreate(BaseModel):
     email :EmailStr
@@ -22,6 +21,7 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
+        print(passwd.get_secret_value())
         if not re.match(PASSWORD_PATTERN, passwd.get_secret_value()):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         return passwd

@@ -1,19 +1,35 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from core.database import connect_db, disconnect_db
 from routers import user, conversation, direct_message, group, group_message
 
 
-app = FastAPI()
-
-
-@app.on_event("startup")
-def startapp():
+# 1. Define the lifespan function BEFORE creating the app instance
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Everything BEFORE 'yield' runs on startup
+    print("Starting up...") 
     connect_db()
 
-
-@app.on_event("shutdown")
-def shutdown():
+    
+    yield  # This hands control back to the FastAPI app
+    
+    # Everything AFTER 'yield' runs on shutdown
+    print("Shutting down...")
     disconnect_db()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+# @app.on_event("startup")
+# def startapp():
+#     connect_db()
+
+
+# @app.on_event("shutdown")
+# def shutdown():
+#     disconnect_db()
 
 
 app.include_router(user.router, prefix="/users", tags=["users"])
