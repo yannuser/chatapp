@@ -1,10 +1,22 @@
-backend/.env
-backend/__pycache__
-backend/utils/__pycache__
-backend/dependencies/__pycache__
-backend/internal/__pycache__
-backend/core/__pycache__
-backend/models/__pycache__
-backend/routers/__pycache__
-backend/schemas/__pycache__
-backend/services/__pycache__
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
