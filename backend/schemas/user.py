@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, SecretStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, SecretStr, Field, field_validator
 from datetime import datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 import re
@@ -7,6 +7,7 @@ import re
 
 USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
 PASSWORD_PATTERN = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$"
+
 
 class UserCreate(BaseModel):
     email :EmailStr
@@ -40,7 +41,7 @@ class UserCreate(BaseModel):
              raise ValueError("You have to be atleast 10yo.") 
         return given_date  
     
-
+    
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(default=None, max_length=250)
