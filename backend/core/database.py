@@ -9,9 +9,7 @@ def connect_db():
         alias="default"
     )
     print("CONNECTED TO MONGO")
-    print(settings.MONGO_URI)
-    print(settings.MONGO_DB)
 
 
 def disconnect_db():
-    mongoengine.disconnect()
+    mongoengine.disconnect(alias="default")

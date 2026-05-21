@@ -1,12 +1,12 @@
 from mongoengine import Document, StringField, EmailField, DateField, DateTimeField, ListField, ReferenceField
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from dateutil.relativedelta import relativedelta
 import models.contact as contact
 import re
 
 
-def validate_birthdate(given_date):
-    if given_date > datetime.today() - relativedelta(years= 10):
+def validate_birthdate(given_date : date):
+    if given_date > datetime.today().date() - relativedelta(years= 10):
         raise ValueError("Date is wrong.")
 
 

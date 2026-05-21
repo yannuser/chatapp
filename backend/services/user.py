@@ -3,9 +3,10 @@ from models.user import User
 from schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException
 from passlib.context import CryptContext
+from passlib.context import CryptContext
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def create_user(data: UserCreate) -> User:
