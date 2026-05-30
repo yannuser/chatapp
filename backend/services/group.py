@@ -1,13 +1,22 @@
 from models.group import Group
+from models.user import User
 from schemas.group import GroupCreate, GroupUpdate
 from fastapi import HTTPException
 
 def create_groupe(data: GroupCreate) -> Group:
     try:
+        members = list(User.objects(id__in=data.member_ids))  # type: ignore
+        if len(members) != len(set(data.member_ids)):
+            raise HTTPException(status_code=404, detail="One or more users were not found")
+        creator = User.objects(id=data.creator_id).first()  # type: ignore
+        if not creator:
+            raise HTTPException(status_code=404, detail="Creator not found")
         group = Group(title=data.title, description=data.description,
-                      members=data.members, creator=data.creator)
+                      members=members, creator=creator)
         group.save()
         return group
+    except HTTPException:
+        raise
     except Exception as e:
         print("CREATE GROUP ERROR:", str(e))
         raise
@@ -28,10 +37,10 @@ def get_by_id(group_id: str) -> Group:
 
 def get_by_title(group_name: str, user_id: str) -> Group:
     try:
-        groups = Group.objects(title=group_name, members=user_id)  # type: ignore
-        if not groups:
+        group = Group.objects(title=group_name, members=user_id).first()  # type: ignore
+        if not group:
             raise HTTPException(status_code=404, detail="Group not found")
-        return groups
+        return group
     except HTTPException:
         raise
     except Exception as e:
@@ -44,9 +53,15 @@ def update_groupe(group_id: str, data: GroupUpdate) -> Group:
         group = Group.objects(id=group_id).first()  # type: ignore
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
-        if not data:
+        update_data = data.model_dump(exclude_none=True, exclude={"member_ids"})
+        if data.member_ids is not None:
+            members = list(User.objects(id__in=data.member_ids))  # type: ignore
+            if len(members) != len(set(data.member_ids)):
+                raise HTTPException(status_code=404, detail="One or more users were not found")
+            update_data["members"] = members
+        if not update_data:
             return group
-        group.update(data)
+        group.update(**update_data)
         group.reload()
         return group
     except HTTPException:
@@ -61,7 +76,7 @@ def delete_group(group_id: str, user_id: str) -> None:
         group = Group.objects(id=group_id).first()  # type: ignore
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
-        if user_id != group.creator:
+        if str(group.creator.id) != user_id:
             raise HTTPException(status_code=403, detail="You do not have the rights to do that")
         group.delete()
     except HTTPException:

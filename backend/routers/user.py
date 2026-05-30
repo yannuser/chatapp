@@ -1,6 +1,5 @@
 # app/routers/users.py
-from fastapi import APIRouter, HTTPException
-from typing import List
+from fastapi import APIRouter
 from schemas.user import UserCreate, UserUpdate, UserResponse
 from services.user import create_user, update_user, get_user_by_id, get_by_email, get_by_username, delete_user
 
@@ -13,11 +12,6 @@ def create_user_endpoint(user: UserCreate):
     return create_user(user)
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-def get_user_endpoint(user_id: str):
-    return get_user_by_id(user_id)
-
-
 @router.get("/email/{email}", response_model=UserResponse)
 def get_user_by_email_endpoint(email: str):
     return get_by_email(email)
@@ -26,6 +20,11 @@ def get_user_by_email_endpoint(email: str):
 @router.get("/username/{username}", response_model=UserResponse)
 def get_user_by_username_endpoint(username: str):
     return get_by_username(username)
+
+
+@router.get("/{user_id}", response_model=UserResponse)
+def get_user_endpoint(user_id: str):
+    return get_user_by_id(user_id)
 
 
 @router.put("/{user_id}", response_model=UserResponse)

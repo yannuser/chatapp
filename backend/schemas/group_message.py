@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 class GroupMessageCreate(BaseModel):
-    group : GroupResponse
+    group_id : str
     content : str = Field(max_length=3000)
-    sender : UserResponse
+    sender_id : str
     sent_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at : Optional[datetime] = None
 

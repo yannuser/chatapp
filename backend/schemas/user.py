@@ -22,7 +22,6 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
-        print(passwd.get_secret_value())
         if not re.match(PASSWORD_PATTERN, passwd.get_secret_value()):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         return passwd

@@ -8,13 +8,13 @@ router = APIRouter()
 def create_group_endpoint(group: GroupCreate):
     return create_groupe(group)
 
-@router.get("/{group_id}", response_model=GroupResponse)
-def get_group_by_id_endpoint(group_id: str):
-    return get_by_id(group_id)
-
 @router.get("/title/{group_name}/user/{user_id}", response_model=GroupResponse)
 def get_group_by_title_endpoint(group_name: str, user_id: str):
     return get_by_title(group_name, user_id)
+
+@router.get("/{group_id}", response_model=GroupResponse)
+def get_group_by_id_endpoint(group_id: str):
+    return get_by_id(group_id)
 
 @router.put("/{group_id}", response_model=GroupResponse)
 def update_group_endpoint(group_id: str, group_update: GroupUpdate):

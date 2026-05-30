@@ -24,7 +24,6 @@ def create_user(data: UserCreate) -> User:
             password=pwd_context.hash(data.password.get_secret_value()),
         )
         user.save()
-        print("SAVED USER:", user.to_json())
         return user
     except Exception as e:
         print("SAVE ERROR:", str(e))

@@ -1,13 +1,19 @@
 from models.conversation import Conversation
+from models.user import User
 from schemas.conversation import ConversationCreate
 from fastapi import HTTPException
 
 
 def create_conversation(data: ConversationCreate) -> Conversation:
     try:
-        convo = Conversation(members=data.members)
+        members = list(User.objects(id__in=data.member_ids))  # type: ignore
+        if len(members) != len(set(data.member_ids)):
+            raise HTTPException(status_code=404, detail="One or more users were not found")
+        convo = Conversation(members=members)
         convo.save()
         return convo
+    except HTTPException:
+        raise
     except Exception as e:
         print("CREATE CONVERSATION ERROR:", str(e))
         raise

@@ -7,8 +7,8 @@ from typing import Optional
 
 class DirectMessageSave(BaseModel):
     content : str = Field(max_length=3000)
-    sender : UserResponse
-    linked_conversation : ConversationResponse
+    sender_id : str
+    linked_conversation_id : str
     created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at : Optional[datetime] = None
 
