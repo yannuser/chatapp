@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from core.database import connect_db, disconnect_db
-from routers import user, conversation, direct_message, group, group_message
+from routers import user, conversation, direct_message, group, group_message, contact
 
 
 # 1. Define the lifespan function BEFORE creating the app instance
@@ -37,3 +37,4 @@ app.include_router(conversation.router, prefix="/conversations", tags=["conversa
 app.include_router(direct_message.router, prefix="/direct-messages", tags=["direct_messages"])
 app.include_router(group.router, prefix="/groups", tags=["groups"])
 app.include_router(group_message.router, prefix="/group-messages", tags=["group_messages"])
+app.include_router(contact.router, prefix="/contacts", tags=["contacts"])

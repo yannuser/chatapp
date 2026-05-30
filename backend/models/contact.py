@@ -1,28 +1,23 @@
-# from mongoengine import Document, StringField, EmailField, DateTimeField, DateField, ReferenceField
-# from  datetime import datetime, timezone
-# from dateutil.relativedelta import relativedelta
-# import models.user as user
-# import re
+from datetime import datetime, timezone
 
-# def check_birthdate(given_date):
-#     now = datetime.now()
-#     if given_date > now - relativedelta(years= 10):
-#         raise ValueError("Date is wrong.")
+from mongoengine import CASCADE, Document, DateTimeField, ListField, ReferenceField
 
-# class Contact(Document):
-#     user = ReferenceField(user, required=True)
-#     email = EmailField(required=True, unique=True)
-#     first_name = StringField(required=True, max_length=250)
-#     last_name = StringField(required=True, max_length=250)
-#     birthdate = DateField(required=True, validation=check_birthdate)
-#     username = StringField(required=True, unique=True, max_length=150)
-#     created_at = DateTimeField(default= datetime.now(timezone.utc))
-#     updated_at = DateTimeField(required=False)
 
-#     meta = {
-#         "collection" : "conversations",
-#         "ordering": ["-created_at"],
-#         "indexes": ["members"],
-#         "allow_inheritance": False,
-#         "strict": True,
-#     }
+class Contact(Document):
+    user = ReferenceField("User", reverse_delete_rule=CASCADE, required=True, unique=True)
+    contacts = ListField(ReferenceField("User", reverse_delete_rule=CASCADE))
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(required=False)
+
+    def clean(self):
+        if not self.created_at:
+            self.created_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
+
+    meta = {
+        "collection": "contacts",
+        "ordering": ["-created_at"],
+        "indexes": ["user", "contacts"],
+        "allow_inheritance": False,
+        "strict": True,
+    }
