@@ -33,6 +33,6 @@ class Settings(BaseSettings):
     MAINTENANCE_MODE: bool = False
     MAX_REQUEST_SIZE: int = 5 * 1024 * 1024  # 5MB
     REQUEST_TIMEOUT: int = 30  # seconds
-    SESSION_SECRET_KEY: str = "super-secret-session-key-change-this"
+    SESSION_SECRET_KEY: str # Must be provided in .env
 
 settings = Settings()

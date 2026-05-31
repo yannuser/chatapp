@@ -16,7 +16,7 @@ class DirectMessage(Document):
         self.updated_at = datetime.now(timezone.utc)
 
     meta = {
-        "collection": "messages",
+        "collection": "direct_messages",
         "ordering": ["-sent_at"],
         "indexes": ["content"],
         "allow_inheritance": False,

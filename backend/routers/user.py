@@ -1,6 +1,7 @@
 # app/routers/users.py
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends, HTTPException, status
 from core.ratelimit import limiter
+from core.security import get_current_user
 from schemas.user import UserCreate, UserUpdate, UserResponse
 from services.user import create_user, update_user, get_user_by_id, get_by_email, get_by_username, delete_user
 
@@ -15,26 +16,30 @@ def create_user_endpoint(user: UserCreate, request: Request):
 
 
 @router.get("/email/{email}", response_model=UserResponse)
-def get_user_by_email_endpoint(email: str):
+def get_user_by_email_endpoint(email: str, current_user=Depends(get_current_user)):
     return get_by_email(email)
 
 
 @router.get("/username/{username}", response_model=UserResponse)
-def get_user_by_username_endpoint(username: str):
+def get_user_by_username_endpoint(username: str, current_user=Depends(get_current_user)):
     return get_by_username(username)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_endpoint(user_id: str):
+def get_user_endpoint(user_id: str, current_user=Depends(get_current_user)):
     return get_user_by_id(user_id)
 
 
 @router.put("/{user_id}", response_model=UserResponse)
-def update_user_endpoint(user_id: str, user_update: UserUpdate):
+def update_user_endpoint(user_id: str, user_update: UserUpdate, current_user=Depends(get_current_user)):
+    if str(current_user.id) != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this user")
     return update_user(user_id, user_update)
 
 
 @router.delete("/{user_id}", status_code=204)
-def delete_user_endpoint(user_id: str):
+def delete_user_endpoint(user_id: str, current_user=Depends(get_current_user)):
+    if str(current_user.id) != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this user")
     delete_user(user_id)
     return None

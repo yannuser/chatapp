@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from core.security import get_current_user
 from schemas.contact import ContactAdd, ContactCreate, ContactResponse
 from services.contact import (
     add_contact,
@@ -13,26 +13,28 @@ router = APIRouter()
 
 
 @router.post("/", response_model=ContactResponse, status_code=201)
-def create_contact_list_endpoint(contact_list: ContactCreate):
+def create_contact_list_endpoint(contact_list: ContactCreate, current_user=Depends(get_current_user)):
+    if str(current_user.id) != contact_list.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
     return create_contact_list(contact_list)
 
 
-@router.get("/user/{user_id}", response_model=ContactResponse)
-def get_contacts_endpoint(user_id: str):
-    return get_contacts(user_id)
+@router.get("/", response_model=ContactResponse)
+def get_contacts_endpoint(current_user=Depends(get_current_user)):
+    return get_contacts(str(current_user.id))
 
 
-@router.post("/user/{user_id}", response_model=ContactResponse)
-def add_contact_endpoint(user_id: str, contact: ContactAdd):
-    return add_contact(user_id, contact.contact_id)
+@router.post("/add", response_model=ContactResponse)
+def add_contact_endpoint(contact: ContactAdd, current_user=Depends(get_current_user)):
+    return add_contact(str(current_user.id), contact.contact_id)
 
 
-@router.delete("/user/{user_id}/contact/{contact_id}", response_model=ContactResponse)
-def remove_contact_endpoint(user_id: str, contact_id: str):
-    return remove_contact(user_id, contact_id)
+@router.delete("/{contact_id}", response_model=ContactResponse)
+def remove_contact_endpoint(contact_id: str, current_user=Depends(get_current_user)):
+    return remove_contact(str(current_user.id), contact_id)
 
 
-@router.delete("/user/{user_id}", status_code=204)
-def delete_contact_list_endpoint(user_id: str):
-    delete_contact_list(user_id)
+@router.delete("/", status_code=204)
+def delete_contact_list_endpoint(current_user=Depends(get_current_user)):
+    delete_contact_list(str(current_user.id))
     return None

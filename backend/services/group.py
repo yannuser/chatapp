@@ -48,11 +48,13 @@ def get_by_title(group_name: str, user_id: str) -> Group:
         raise
 
 
-def update_groupe(group_id: str, data: GroupUpdate) -> Group:
+def update_groupe(group_id: str, data: GroupUpdate, user_id: str) -> Group:
     try:
         group = Group.objects(id=group_id).first()  # type: ignore
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
+        if str(group.creator.id) != user_id:
+            raise HTTPException(status_code=403, detail="Only the creator can update the group")
         update_data = data.model_dump(exclude_none=True, exclude={"member_ids"})
         if data.member_ids is not None:
             members = list(User.objects(id__in=data.member_ids))  # type: ignore

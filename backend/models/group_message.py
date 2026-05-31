@@ -17,7 +17,7 @@ class GroupMessage(Document):
         self.updated_at = datetime.now(timezone.utc)
 
     meta = {
-        "collection": "messages",
+        "collection": "group_messages",
         "ordering": ["-sent_at"],
         "indexes": ["content"],
         "allow_inheritance": False,

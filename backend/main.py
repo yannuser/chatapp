@@ -9,7 +9,17 @@ from core.config import settings
 from core.database import connect_db, disconnect_db
 from routers import user, conversation, direct_message, group, group_message, contact, auth, websocket
 from core.ratelimit import limiter, RateLimitExceeded, _rate_limit_exceeded_handler
-from core.middleware import AdvancedMiddleware
+from core.middlewares.security_headers import SecurityHeadersMiddleware
+from core.middlewares.maintenance import MaintenanceModeMiddleware
+from core.middlewares.size_limit import RequestSizeLimiterMiddleware
+from core.middlewares.logging import LoggingMiddleware
+from core.middlewares.user_context import UserContextMiddleware
+from core.middlewares.request_id import RequestIdMiddleware
+from core.middlewares.timeout import TimeoutMiddleware
+from core.middlewares.error_handling import ErrorHandlerMiddleware
+
+
+from core.websocket import manager as ws_manager
 
 
 # 1. Define the lifespan function BEFORE creating the app instance
@@ -18,12 +28,14 @@ async def lifespan(app: FastAPI):
     # Everything BEFORE 'yield' runs on startup
     print("Starting up...") 
     connect_db()
+    await ws_manager.start()
 
     
     yield  # This hands control back to the FastAPI app
     
     # Everything AFTER 'yield' runs on shutdown
     print("Shutting down...")
+    await ws_manager.stop()
     disconnect_db()
 
 
@@ -37,8 +49,15 @@ app.add_middleware(
     allowed_hosts=settings.ALLOWED_HOSTS
 )
 
-# 2. Advanced Custom Middleware: Logging, Request ID, Timeout, Security Headers, etc.
-app.add_middleware(AdvancedMiddleware)
+# 2. Custom Middleware Stack (Innermost to Outermost)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(TimeoutMiddleware)
+app.add_middleware(RequestSizeLimiterMiddleware)
+app.add_middleware(MaintenanceModeMiddleware)
+app.add_middleware(UserContextMiddleware)
+app.add_middleware(RequestIdMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(ErrorHandlerMiddleware)
 
 # 3. Session Middleware: For encrypted session cookies
 app.add_middleware(

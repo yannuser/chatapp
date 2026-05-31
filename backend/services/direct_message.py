@@ -53,11 +53,13 @@ def update_direct_message(msg_id: str, user_id: str, data: DirectMessageUpdate) 
         raise
 
 
-def delete_direct_message(msg_id: str) -> None:
+def delete_direct_message(msg_id: str, user_id: str) -> None:
     try:
         msg = DirectMessage.objects(id=msg_id).first()  # type: ignore
         if not msg:
             raise HTTPException(status_code=404, detail="Message not found")
+        if str(msg.sender.id) != user_id:
+            raise HTTPException(status_code=403, detail="You do not have the rights to do that")
         msg.delete()
     except HTTPException:
         raise
