@@ -1,8 +1,10 @@
+import logging
 from fastapi import HTTPException
-
 from models.contact import Contact
 from models.user import User
 from schemas.contact import ContactCreate
+
+logger = logging.getLogger("contact_service")
 
 
 def _get_user(user_id: str) -> User:
@@ -39,7 +41,7 @@ def create_contact_list(data: ContactCreate) -> Contact:
     except HTTPException:
         raise
     except Exception as e:
-        print("CREATE CONTACT LIST ERROR:", str(e))
+        logger.error(f"CREATE CONTACT LIST ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -50,7 +52,7 @@ def get_contacts(user_id: str) -> Contact:
     except HTTPException:
         raise
     except Exception as e:
-        print("GET CONTACTS ERROR:", str(e))
+        logger.error(f"GET CONTACTS ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -74,7 +76,7 @@ def add_contact(user_id: str, contact_id: str) -> Contact:
     except HTTPException:
         raise
     except Exception as e:
-        print("ADD CONTACT ERROR:", str(e))
+        logger.error(f"ADD CONTACT ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -95,7 +97,7 @@ def remove_contact(user_id: str, contact_id: str) -> Contact:
     except HTTPException:
         raise
     except Exception as e:
-        print("REMOVE CONTACT ERROR:", str(e))
+        logger.error(f"REMOVE CONTACT ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -107,5 +109,5 @@ def delete_contact_list(user_id: str) -> None:
     except HTTPException:
         raise
     except Exception as e:
-        print("DELETE CONTACT LIST ERROR:", str(e))
+        logger.error(f"DELETE CONTACT LIST ERROR: {str(e)}", exc_info=True)
         raise

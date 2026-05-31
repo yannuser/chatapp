@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, Response, Cookie, HTTPException, status,
 import jwt
 from core.ratelimit import limiter
 from core.config import settings
-from core.security import get_current_user, create_access_token, create_refresh_token, _credentials_exception
-from core.redis import blacklist_token
+from core.security import get_current_user, create_access_token, create_refresh_token, _credentials_exception, decode_access_token
+from core.redis import blacklist_token, is_token_blacklisted
 from schemas.auth import LoginRequest, TokenResponse
 from schemas.user import UserResponse
 from services.auth import authenticate_user
@@ -47,6 +47,10 @@ def refresh_token_endpoint(response: Response, request: Request, refresh_token: 
         if payload.get("token_use") != "refresh":
             raise _credentials_exception()
         
+        jti = payload.get("jti")
+        if jti and is_token_blacklisted(jti):
+            raise _credentials_exception()
+        
         user_id = payload.get("sub")
         new_access_token = create_access_token(subject=user_id)
         new_refresh_token = create_refresh_token(subject=user_id)
@@ -69,9 +73,24 @@ def refresh_token_endpoint(response: Response, request: Request, refresh_token: 
 @router.post("/logout")
 def logout_endpoint(
     response: Response, 
+    request: Request,
     current_user = Depends(get_current_user),
     refresh_token: str | None = Cookie(None)
 ):
+    # Blacklist the access token
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        try:
+            token = auth_header.split(" ")[1]
+            payload = decode_access_token(token)
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            now = int(datetime.now(timezone.utc).timestamp())
+            if jti and exp > now:
+                blacklist_token(jti, exp - now)
+        except Exception:
+            pass
+
     # Blacklist the refresh token if provided
     if refresh_token:
         try:

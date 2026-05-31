@@ -7,7 +7,8 @@ router = APIRouter()
 
 @router.post("/", response_model=GroupResponse, status_code=201)
 def create_group_endpoint(group: GroupCreate, current_user=Depends(get_current_user)):
-    # You might want to ensure the current user is added as owner/member in the service
+    # Force creator_id to current user to prevent spoofing
+    group.creator_id = str(current_user.id)
     return create_groupe(group)
 
 @router.get("/title/{group_name}", response_model=GroupResponse)
@@ -16,7 +17,7 @@ def get_group_by_title_endpoint(group_name: str, current_user=Depends(get_curren
 
 @router.get("/{group_id}", response_model=GroupResponse)
 def get_group_by_id_endpoint(group_id: str, current_user=Depends(get_current_user)):
-    return get_by_id(group_id)
+    return get_by_id(group_id, str(current_user.id))
 
 @router.put("/{group_id}", response_model=GroupResponse)
 def update_group_endpoint(group_id: str, group_update: GroupUpdate, current_user=Depends(get_current_user)):

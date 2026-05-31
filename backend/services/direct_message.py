@@ -4,6 +4,9 @@ from models.user import User
 from schemas.direct_message import DirectMessageSave, DirectMessageUpdate, DirectMessageResponse
 from fastapi import HTTPException
 from core.websocket import manager
+import logging
+
+logger = logging.getLogger("direct_message_service")
 
 
 async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
@@ -14,6 +17,11 @@ async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
         conversation = Conversation.objects(id=data.linked_conversation_id).first()  # type: ignore
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Verify sender is a member of the conversation
+        if all(str(member.id) != data.sender_id for member in conversation.members):
+            raise HTTPException(status_code=403, detail="You are not a member of this conversation")
+            
         msg = DirectMessage(content=data.content, sender=sender, linked_conversation=conversation)
         msg.save()
 
@@ -29,7 +37,7 @@ async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
     except HTTPException:
         raise
     except Exception as e:
-        print("CREATE MESSAGE ERROR:", str(e))
+        logger.error(f"CREATE MESSAGE ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -49,7 +57,7 @@ def update_direct_message(msg_id: str, user_id: str, data: DirectMessageUpdate) 
     except HTTPException:
         raise
     except Exception as e:
-        print("UPDATE MESSAGE ERROR:", str(e))
+        logger.error(f"UPDATE MESSAGE ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -64,5 +72,5 @@ def delete_direct_message(msg_id: str, user_id: str) -> None:
     except HTTPException:
         raise
     except Exception as e:
-        print("DELETE MESSAGE ERROR:", str(e))
+        logger.error(f"DELETE MESSAGE ERROR: {str(e)}", exc_info=True)
         raise

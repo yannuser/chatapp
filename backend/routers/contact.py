@@ -29,12 +29,12 @@ def add_contact_endpoint(contact: ContactAdd, current_user=Depends(get_current_u
     return add_contact(str(current_user.id), contact.contact_id)
 
 
-@router.delete("/{contact_id}", response_model=ContactResponse)
-def remove_contact_endpoint(contact_id: str, current_user=Depends(get_current_user)):
-    return remove_contact(str(current_user.id), contact_id)
-
-
 @router.delete("/", status_code=204)
 def delete_contact_list_endpoint(current_user=Depends(get_current_user)):
     delete_contact_list(str(current_user.id))
     return None
+
+
+@router.delete("/{contact_id}", response_model=ContactResponse)
+def remove_contact_endpoint(contact_id: str, current_user=Depends(get_current_user)):
+    return remove_contact(str(current_user.id), contact_id)

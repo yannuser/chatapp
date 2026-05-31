@@ -97,7 +97,6 @@ class UserResponse(BaseModel):
     last_name : str
     birthdate : date
     username : str
-    password :  SecretStr = Field(exclude=True)
     created_at : datetime
     updated_at : Optional[datetime] = None
 

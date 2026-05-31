@@ -1,7 +1,10 @@
+import logging
 from core.security import hash_password
 from models.user import User
 from schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException
+
+logger = logging.getLogger("user_service")
 
 
 def create_user(data: UserCreate) -> User:
@@ -21,7 +24,7 @@ def create_user(data: UserCreate) -> User:
         user.save()
         return user
     except Exception as e:
-        print("SAVE ERROR:", str(e))
+        logger.error(f"CREATE USER ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -41,7 +44,7 @@ def update_user(user_id: str, data: UserUpdate) -> User:
     except HTTPException:
         raise
     except Exception as e:
-        print("UPDATE ERROR:", str(e))
+        logger.error(f"UPDATE USER ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -54,7 +57,7 @@ def get_user_by_id(user_id: str) -> User:
     except HTTPException:
         raise
     except Exception as e:
-        print("GET BY ID ERROR:", str(e))
+        logger.error(f"GET USER BY ID ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -67,7 +70,7 @@ def get_by_email(user_email: str) -> User:
     except HTTPException:
         raise
     except Exception as e:
-        print("GET BY EMAIL ERROR:", str(e))
+        logger.error(f"GET USER BY EMAIL ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -80,7 +83,7 @@ def get_by_username(user_username: str) -> User:
     except HTTPException:
         raise
     except Exception as e:
-        print("GET BY USERNAME ERROR:", str(e))
+        logger.error(f"GET USER BY USERNAME ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -93,5 +96,5 @@ def delete_user(user_id: str) -> None:
     except HTTPException:
         raise
     except Exception as e:
-        print("DELETE ERROR:", str(e))
+        logger.error(f"DELETE USER ERROR: {str(e)}", exc_info=True)
         raise

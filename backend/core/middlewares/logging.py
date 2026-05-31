@@ -36,7 +36,14 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         user_info = f" | User: {user_id}" if user_id else ""
         logger.info(f"RID: {request_id}{user_info} | Start | {request.method} {request.url.path}")
         if settings.DEBUG and request_body:
-            logger.info(f"RID: {request_id} | Body: {request_body}")
+            # Redact sensitive fields
+            log_body = request_body
+            if isinstance(log_body, dict):
+                log_body = log_body.copy()
+                for key in ["password", "token", "access_token", "refresh_token", "secret"]:
+                    if key in log_body:
+                        log_body[key] = "********"
+            logger.info(f"RID: {request_id} | Body: {log_body}")
 
         response = await call_next(request)
         

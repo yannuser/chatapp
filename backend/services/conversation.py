@@ -1,7 +1,10 @@
+import logging
 from models.conversation import Conversation
 from models.user import User
 from schemas.conversation import ConversationCreate
 from fastapi import HTTPException
+
+logger = logging.getLogger("conversation_service")
 
 
 def create_conversation(data: ConversationCreate) -> Conversation:
@@ -15,7 +18,7 @@ def create_conversation(data: ConversationCreate) -> Conversation:
     except HTTPException:
         raise
     except Exception as e:
-        print("CREATE CONVERSATION ERROR:", str(e))
+        logger.error(f"CREATE CONVERSATION ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -30,7 +33,7 @@ def get_conversation_by_id(convo_id: str, user_id: str) -> Conversation:
     except HTTPException:
         raise
     except Exception as e:
-        print("GET CONVERSATION ERROR:", str(e))
+        logger.error(f"GET CONVERSATION ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -45,7 +48,7 @@ def delete_conversation(convo_id: str, user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print("DELETE CONVERSATION ERROR:", str(e))
+        logger.error(f"DELETE CONVERSATION ERROR: {str(e)}", exc_info=True)
         raise
 
 
@@ -53,5 +56,5 @@ def get_user_conversations(user_id: str) -> list[Conversation]:
     try:
         return list(Conversation.objects(members=user_id))  # type: ignore
     except Exception as e:
-        print("GET USER CONVERSATIONS ERROR:", str(e))
+        logger.error(f"GET USER CONVERSATIONS ERROR: {str(e)}", exc_info=True)
         raise
