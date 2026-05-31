@@ -43,3 +43,11 @@ def delete_conversation(convo_id: str):
     except Exception as e:
         print("DELETE CONVERSATION ERROR:", str(e))
         raise
+
+
+def get_user_conversations(user_id: str) -> list[Conversation]:
+    try:
+        return list(Conversation.objects(members=user_id))  # type: ignore
+    except Exception as e:
+        print("GET USER CONVERSATIONS ERROR:", str(e))
+        raise

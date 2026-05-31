@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, EmailField, DateField, DateTimeField, ListField, ReferenceField
+from mongoengine import Document, StringField, EmailField, DateField, DateTimeField, ListField, ReferenceField, IntField
 from datetime import datetime, timezone, date
 from dateutil.relativedelta import relativedelta
 import re
@@ -24,6 +24,10 @@ class User(Document):
     password = StringField(required=True)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
     updated_at = DateTimeField(required=False)
+    
+    # Brute Force Protection
+    failed_login_attempts = IntField(default=0)
+    locked_until = DateTimeField(required=False)
     # contacts = ListField(ReferenceField(Contact))
 
     def clean(self):
@@ -34,7 +38,7 @@ class User(Document):
     meta = {
         "collection" : "users",
         "ordering": ["-created_at"],
-        "indexes": ["email", "username", "first_name", "first_name"],
+        "indexes": ["email", "username", "first_name", "locked_until"],
         "allow_inheritance": False,
         "strict": True,
     }

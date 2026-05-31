@@ -3,9 +3,10 @@ from models.group import Group
 from models.user import User
 from schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse
 from fastapi import HTTPException
+from core.websocket import manager
 
 
-def create_group_message(data: GroupMessageCreate) -> GroupMessage:
+async def create_group_message(data: GroupMessageCreate) -> GroupMessage:
     try:
         group = Group.objects(id=data.group_id).first()  # type: ignore
         if not group:
@@ -15,6 +16,15 @@ def create_group_message(data: GroupMessageCreate) -> GroupMessage:
             raise HTTPException(status_code=404, detail="Sender not found")
         grp_msg = GroupMessage(group=group, content=data.content, sender=sender)
         grp_msg.save()
+
+        # Prepare payload for real-time delivery
+        payload = GroupMessageResponse.model_validate(grp_msg).model_dump(mode="json")
+        payload["type"] = "new_group_message"
+
+        # Notify all members of the group
+        for member in group.members:
+            await manager.send_personal_message(str(member.id), payload)
+
         return grp_msg
     except HTTPException:
         raise

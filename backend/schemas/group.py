@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+from typing import List, Optional, Any
 from schemas.user import UserResponse
 from datetime import datetime, timezone
 
@@ -20,9 +20,18 @@ class GroupUpdate(BaseModel):
 
 
 class GroupResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     title : str
     description : str | None
     members : List[UserResponse]
     creator : UserResponse
     created_at : datetime
-    updated_at : datetime
+    updated_at : Optional[datetime] = None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def transform_id(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        return str(value)

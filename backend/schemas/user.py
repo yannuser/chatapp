@@ -1,8 +1,9 @@
-from typing import Optional
-from pydantic import BaseModel, EmailStr, SecretStr, Field, field_validator
+from typing import Optional, Any
+from pydantic import BaseModel, EmailStr, SecretStr, Field, field_validator, ConfigDict
 from datetime import datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 import re
+from zxcvbn import zxcvbn
 
 
 USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
@@ -22,8 +23,16 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
-        if not re.match(PASSWORD_PATTERN, passwd.get_secret_value()):
+        password_val = passwd.get_secret_value()
+        if not re.match(PASSWORD_PATTERN, password_val):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
+        
+        # Check for common/weak passwords using zxcvbn
+        results = zxcvbn(password_val)
+        if results['score'] < 3:
+            feedback = results['feedback']['warning'] or "This password is too common or easy to guess."
+            raise ValueError(f"Weak password: {feedback}")
+            
         return passwd
     
     @field_validator("username")
@@ -53,8 +62,16 @@ class UserUpdate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
-        if not re.match(PASSWORD_PATTERN, passwd.get_secret_value()):
+        password_val = passwd.get_secret_value()
+        if not re.match(PASSWORD_PATTERN, password_val):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
+        
+        # Check for common/weak passwords using zxcvbn
+        results = zxcvbn(password_val)
+        if results['score'] < 3:
+            feedback = results['feedback']['warning'] or "This password is too common or easy to guess."
+            raise ValueError(f"Weak password: {feedback}")
+            
         return passwd
     
     @field_validator("username")
@@ -73,6 +90,8 @@ class UserUpdate(BaseModel):
     
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     email :EmailStr
     first_name : str
     last_name : str
@@ -80,4 +99,11 @@ class UserResponse(BaseModel):
     username : str
     password :  SecretStr = Field(exclude=True)
     created_at : datetime
-    updated_at : datetime
+    updated_at : Optional[datetime] = None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def transform_id(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        return str(value)

@@ -1,11 +1,17 @@
 # app/routers/conversations.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import List
 from schemas.conversation import ConversationCreate, ConversationResponse
-from services.conversation import create_conversation, get_conversation_by_id, delete_conversation
+from services.conversation import create_conversation, get_conversation_by_id, delete_conversation, get_user_conversations
+from core.security import get_current_user
 
 
 router = APIRouter()
+
+
+@router.get("/", response_model=List[ConversationResponse])
+def get_user_conversations_endpoint(current_user=Depends(get_current_user)):
+    return get_user_conversations(str(current_user.id))
 
 
 @router.post("/", response_model=ConversationResponse, status_code=201)

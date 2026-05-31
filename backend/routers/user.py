@@ -1,5 +1,6 @@
 # app/routers/users.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from core.ratelimit import limiter
 from schemas.user import UserCreate, UserUpdate, UserResponse
 from services.user import create_user, update_user, get_user_by_id, get_by_email, get_by_username, delete_user
 
@@ -8,7 +9,8 @@ router = APIRouter()
 
 
 @router.post("/", response_model=UserResponse, status_code=201)
-def create_user_endpoint(user: UserCreate):
+@limiter.limit("3 per minute")
+def create_user_endpoint(user: UserCreate, request: Request):
     return create_user(user)
 
 

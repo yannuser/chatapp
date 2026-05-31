@@ -1,0 +1,22 @@
+import redis
+from core.config import settings
+
+# Construct Redis URI for SlowAPI and other tools
+REDIS_URL = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+if settings.REDIS_PASSWORD:
+    REDIS_URL = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+
+# Initialize Redis client
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+
+def blacklist_token(jti: str, expire_seconds: int):
+    """
+    Adds a token identifier (jti) to the blacklist with an expiration time.
+    """
+    redis_client.setex(f"blacklist:{jti}", expire_seconds, "true")
+
+def is_token_blacklisted(jti: str) -> bool:
+    """
+    Checks if a token identifier (jti) exists in the blacklist.
+    """
+    return redis_client.exists(f"blacklist:{jti}") > 0

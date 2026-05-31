@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.conversation import ConversationResponse
 from schemas.user import UserResponse
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Any
 
 
 class DirectMessageSave(BaseModel):
@@ -19,8 +19,17 @@ class DirectMessageUpdate(BaseModel):
 
 
 class DirectMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     content : str
     sender : UserResponse
     linked_conversation : ConversationResponse
     sent_at : datetime
-    updated_at : datetime
+    updated_at : Optional[datetime] = None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def transform_id(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        return str(value)

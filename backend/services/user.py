@@ -1,12 +1,7 @@
-from mongoengine.errors import DoesNotExist
+from core.security import hash_password
 from models.user import User
 from schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException
-from passlib.context import CryptContext
-from passlib.context import CryptContext
-
-
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def create_user(data: UserCreate) -> User:
@@ -21,7 +16,7 @@ def create_user(data: UserCreate) -> User:
             last_name=data.last_name,
             birthdate=data.birthdate,
             username=data.username,
-            password=pwd_context.hash(data.password.get_secret_value()),
+            password=hash_password(data.password.get_secret_value()),
         )
         user.save()
         return user
@@ -37,7 +32,7 @@ def update_user(user_id: str, data: UserUpdate) -> User:
             raise HTTPException(status_code=404, detail="User not found")
         update_data = data.model_dump(exclude_none=True, exclude={"password", "updated_at"})
         if data.password is not None:
-            update_data["password"] = pwd_context.hash(data.password.get_secret_value())
+            update_data["password"] = hash_password(data.password.get_secret_value())
         if not update_data:
             return user
         user.update(**update_data)

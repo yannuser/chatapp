@@ -5,8 +5,8 @@ from services.direct_message import create_direct_message, update_direct_message
 router = APIRouter()
 
 @router.post("/", response_model=DirectMessageResponse, status_code=201)
-def create_direct_message_endpoint(msg: DirectMessageSave):
-    return create_direct_message(msg)
+async def create_direct_message_endpoint(msg: DirectMessageSave):
+    return await create_direct_message(msg)
 
 @router.put("/{msg_id}/user/{user_id}", response_model=DirectMessageResponse)
 def update_direct_message_endpoint(msg_id: str, user_id: str, msg_update: DirectMessageUpdate):

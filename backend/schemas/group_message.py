@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.user import UserResponse
 from schemas.group import GroupResponse
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Any
 
 class GroupMessageCreate(BaseModel):
     group_id : str
@@ -18,8 +18,17 @@ class GroupMessageupdate(BaseModel):
 
 
 class GroupMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
     group : GroupResponse
     content : str
     sender : UserResponse
     sent_at : datetime
-    updated_at : datetime
+    updated_at : Optional[datetime] = None
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def transform_id(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        return str(value)

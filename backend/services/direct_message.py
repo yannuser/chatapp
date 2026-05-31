@@ -1,11 +1,12 @@
 from models.direct_message import DirectMessage
 from models.conversation import Conversation
 from models.user import User
-from schemas.direct_message import DirectMessageSave, DirectMessageUpdate
+from schemas.direct_message import DirectMessageSave, DirectMessageUpdate, DirectMessageResponse
 from fastapi import HTTPException
+from core.websocket import manager
 
 
-def create_direct_message(data: DirectMessageSave) -> DirectMessage:
+async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
     try:
         sender = User.objects(id=data.sender_id).first()  # type: ignore
         if not sender:
@@ -15,6 +16,15 @@ def create_direct_message(data: DirectMessageSave) -> DirectMessage:
             raise HTTPException(status_code=404, detail="Conversation not found")
         msg = DirectMessage(content=data.content, sender=sender, linked_conversation=conversation)
         msg.save()
+
+        # Prepare payload for real-time delivery
+        payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
+        payload["type"] = "new_direct_message"
+
+        # Notify members of the conversation
+        for member in conversation.members:
+            await manager.send_personal_message(str(member.id), payload)
+
         return msg
     except HTTPException:
         raise

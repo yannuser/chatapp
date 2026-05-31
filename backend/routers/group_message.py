@@ -5,8 +5,8 @@ from services.group_message import create_group_message, update_group_message, d
 router = APIRouter()
 
 @router.post("/", response_model=GroupMessageResponse, status_code=201)
-def create_group_message_endpoint(msg: GroupMessageCreate):
-    return create_group_message(msg)
+async def create_group_message_endpoint(msg: GroupMessageCreate):
+    return await create_group_message(msg)
 
 @router.put("/{msg_id}/user/{user_id}", response_model=GroupMessageResponse)
 def update_group_message_endpoint(msg_id: str, user_id: str, msg_update: GroupMessageupdate):
