@@ -10,9 +10,7 @@ class SizedListField(ListField):
         super(SizedListField, self).__init__(field, **kwargs)
 
     def validate(self, value):
-        # Call base validation first
         super(SizedListField, self).validate(value)
-        # Check size directly on the instance value
         if self.max_length is not None and len(value) > self.max_length:
             raise ValidationError(f'List exceeds max_length of {self.max_length}')
 

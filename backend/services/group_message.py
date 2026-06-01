@@ -15,7 +15,6 @@ async def create_group_message(data: GroupMessageCreate) -> GroupMessage:
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
         
-        # Verify sender is a member of the group
         if all(str(member.id) != data.sender_id for member in group.members):
             raise HTTPException(status_code=403, detail="You are not a member of this group")
             
@@ -25,11 +24,9 @@ async def create_group_message(data: GroupMessageCreate) -> GroupMessage:
         grp_msg = GroupMessage(group=group, content=data.content, sender=sender)
         grp_msg.save()
 
-        # Prepare payload for real-time delivery
         payload = GroupMessageResponse.model_validate(grp_msg).model_dump(mode="json")
         payload["type"] = "new_group_message"
 
-        # Notify all members of the group
         for member in group.members:
             await manager.send_personal_message(str(member.id), payload)
 

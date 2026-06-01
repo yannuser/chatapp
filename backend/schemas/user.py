@@ -7,8 +7,7 @@ from zxcvbn import zxcvbn
 
 
 USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
-PASSWORD_PATTERN = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$"
-
+PASSWORD_PATTERN = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$"
 
 class UserCreate(BaseModel):
     email :EmailStr
@@ -23,11 +22,13 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
+        if not passwd:
+            return passwd
+        
         password_val = passwd.get_secret_value()
         if not re.match(PASSWORD_PATTERN, password_val):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         
-        # Check for common/weak passwords using zxcvbn
         results = zxcvbn(password_val)
         if results['score'] < 3:
             feedback = results['feedback']['warning'] or "This password is too common or easy to guess."
@@ -62,11 +63,13 @@ class UserUpdate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
+        if not passwd:
+            return passwd
+        
         password_val = passwd.get_secret_value()
         if not re.match(PASSWORD_PATTERN, password_val):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         
-        # Check for common/weak passwords using zxcvbn
         results = zxcvbn(password_val)
         if results['score'] < 3:
             feedback = results['feedback']['warning'] or "This password is too common or easy to guess."

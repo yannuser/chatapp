@@ -12,7 +12,6 @@ class UserContextMiddleware(BaseHTTPMiddleware):
                 payload = decode_access_token(token)
                 request.state.user_id = payload.get("sub")
             except Exception:
-                # We don't fail the request here, just don't set user_id
                 pass
         
         return await call_next(request)

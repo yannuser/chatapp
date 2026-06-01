@@ -17,12 +17,11 @@ router = APIRouter()
 def login_endpoint(credentials: LoginRequest, response: Response, request: Request):
     tokens = authenticate_user(credentials)
     
-    # Set refresh token in HttpOnly cookie
     response.set_cookie(
         key="refresh_token",
         value=tokens["refresh_token"],
         httponly=True,
-        secure=True,  # Should be True in production
+        secure=True,  
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
@@ -55,7 +54,6 @@ def refresh_token_endpoint(response: Response, request: Request, refresh_token: 
         new_access_token = create_access_token(subject=user_id)
         new_refresh_token = create_refresh_token(subject=user_id)
         
-        # Rotate refresh token
         response.set_cookie(
             key="refresh_token",
             value=new_refresh_token,
@@ -77,7 +75,6 @@ def logout_endpoint(
     current_user = Depends(get_current_user),
     refresh_token: str | None = Cookie(None)
 ):
-    # Blacklist the access token
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         try:
@@ -91,14 +88,13 @@ def logout_endpoint(
         except Exception:
             pass
 
-    # Blacklist the refresh token if provided
     if refresh_token:
         try:
             payload = jwt.decode(
                 refresh_token,
                 settings.JWT_PUBLIC_KEY.replace("\\n", "\n"),
                 algorithms=[settings.JWT_ALGORITHM],
-                options={"verify_exp": False} # Get JTI even if expired
+                options={"verify_exp": False}
             )
             jti = payload.get("jti")
             exp = payload.get("exp")

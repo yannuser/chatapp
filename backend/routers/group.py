@@ -7,7 +7,6 @@ router = APIRouter()
 
 @router.post("/", response_model=GroupResponse, status_code=201)
 def create_group_endpoint(group: GroupCreate, current_user=Depends(get_current_user)):
-    # Force creator_id to current user to prevent spoofing
     group.creator_id = str(current_user.id)
     return create_groupe(group)
 
@@ -21,7 +20,6 @@ def get_group_by_id_endpoint(group_id: str, current_user=Depends(get_current_use
 
 @router.put("/{group_id}", response_model=GroupResponse)
 def update_group_endpoint(group_id: str, group_update: GroupUpdate, current_user=Depends(get_current_user)):
-    # Ownership check is in services.update_groupe
     return update_groupe(group_id, group_update, str(current_user.id))
 
 @router.delete("/{group_id}", status_code=204)

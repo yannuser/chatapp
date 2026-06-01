@@ -96,7 +96,6 @@ def decode_access_token(token: str) -> dict[str, Any]:
             },
         )
         
-        # Check blacklist
         if is_token_blacklisted(payload.get("jti")):
             raise _credentials_exception()
 

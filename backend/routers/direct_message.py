@@ -7,7 +7,6 @@ router = APIRouter()
 
 @router.post("/", response_model=DirectMessageResponse, status_code=201)
 async def create_direct_message_endpoint(msg: DirectMessageSave, current_user=Depends(get_current_user)):
-    # Override sender_id with current user to prevent impersonation
     msg.sender_id = str(current_user.id)
     return await create_direct_message(msg)
 

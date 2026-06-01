@@ -19,7 +19,6 @@ def authenticate_user(data: LoginRequest) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Check if account is locked
     if user.locked_until and user.locked_until > datetime.now(timezone.utc):
         remaining = int((user.locked_until - datetime.now(timezone.utc)).total_seconds() / 60)
         raise HTTPException(
@@ -28,7 +27,6 @@ def authenticate_user(data: LoginRequest) -> dict:
         )
 
     if not verify_password(data.password.get_secret_value(), user.password):
-        # Increment failed attempts
         user.update(inc__failed_login_attempts=1)
         user.reload()
         
@@ -46,7 +44,6 @@ def authenticate_user(data: LoginRequest) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Success: Reset failed attempts
     user.update(set__failed_login_attempts=0, set__locked_until=None)
     
     return {

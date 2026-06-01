@@ -22,10 +22,8 @@ from core.middlewares.error_handling import ErrorHandlerMiddleware
 from core.websocket import manager as ws_manager
 
 
-# 1. Define the lifespan function BEFORE creating the app instance
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Everything BEFORE 'yield' runs on startup
     print("Starting up...") 
     connect_db()
     await ws_manager.start()
@@ -33,7 +31,6 @@ async def lifespan(app: FastAPI):
     
     yield  # This hands control back to the FastAPI app
     
-    # Everything AFTER 'yield' runs on shutdown
     print("Shutting down...")
     await ws_manager.stop()
     disconnect_db()
@@ -43,13 +40,11 @@ app = FastAPI(lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# 1. TrustedHost Middleware: Prevents Host Header Injection
 app.add_middleware(
     TrustedHostMiddleware, 
     allowed_hosts=settings.ALLOWED_HOSTS
 )
 
-# 2. Custom Middleware Stack (Innermost to Outermost)
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(TimeoutMiddleware)
 app.add_middleware(RequestSizeLimiterMiddleware)
@@ -59,13 +54,11 @@ app.add_middleware(RequestIdMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(ErrorHandlerMiddleware)
 
-# 3. Session Middleware: For encrypted session cookies
 app.add_middleware(
     SessionMiddleware, 
     secret_key=settings.SESSION_SECRET_KEY
 )
 
-# 4. CORS Middleware: Allows frontend communication
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -74,19 +67,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 5. GZip Middleware: Compresses responses > 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
-
-
-# @app.on_event("startup")
-# def startapp():
-#     connect_db()
-
-
-# @app.on_event("shutdown")
-# def shutdown():
-#     disconnect_db()
-
+app = RequestSizeLimiterMiddleware(app)
 
 app.include_router(user.router, prefix="/users", tags=["users"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
