@@ -12,8 +12,10 @@ def create_conversation(data: ConversationCreate) -> Conversation:
         members = list(User.objects(id__in=data.member_ids))  # type: ignore
         if len(members) != len(set(data.member_ids)):
             raise HTTPException(status_code=404, detail="One or more users were not found")
+        
         convo = Conversation(members=members)
         convo.save()
+
         return convo
     except HTTPException:
         raise
@@ -27,8 +29,10 @@ def get_conversation_by_id(convo_id: str, user_id: str) -> Conversation:
         convo = Conversation.objects(id=convo_id).first()  # type: ignore
         if not convo:
             raise HTTPException(status_code=404, detail="Conversation not found")
+        
         if all(str(member.id) != user_id for member in convo.members):
             raise HTTPException(status_code=403, detail="You are not a member of this conversation")
+        
         return convo
     except HTTPException:
         raise
@@ -42,8 +46,10 @@ def delete_conversation(convo_id: str, user_id: str):
         convo = Conversation.objects(id=convo_id).first()  # type: ignore
         if not convo:
             raise HTTPException(status_code=404, detail="Conversation not found")
+        
         if all(str(member.id) != user_id for member in convo.members):
             raise HTTPException(status_code=403, detail="You do not have the rights to delete this conversation")
+        
         convo.delete()
     except HTTPException:
         raise

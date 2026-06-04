@@ -6,7 +6,7 @@ from mongoengine import CASCADE, Document, DateTimeField, ListField, ReferenceFi
 class Contact(Document):
     user = ReferenceField("User", reverse_delete_rule=CASCADE, required=True, unique=True)
     contacts = ListField(ReferenceField("User", reverse_delete_rule=CASCADE))
-    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc), required=True)
     updated_at = DateTimeField(required=False)
 
     def clean(self):

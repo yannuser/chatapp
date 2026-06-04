@@ -16,7 +16,7 @@ class SizedListField(ListField):
 
 class Conversation(Document):
     members = SizedListField(ReferenceField("User", reverse_delete_rule=CASCADE), max_length=2)
-    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc), required=True)
     updated_at = DateTimeField(required=False)
 
     def clean(self):

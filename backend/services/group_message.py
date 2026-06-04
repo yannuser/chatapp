@@ -43,11 +43,14 @@ def update_group_message(msg_id: str, user_id: str, data: GroupMessageupdate) ->
         grp_msg = GroupMessage.objects(id=msg_id, sender=user_id).first()  # type: ignore
         if not grp_msg:
             raise HTTPException(status_code=404, detail="Message not found.")
+        
         update_data = data.model_dump(exclude_none=True)
         if not update_data:
             return grp_msg
+        
         grp_msg.update(**update_data)
         grp_msg.reload()
+
         return grp_msg
     except HTTPException:
         raise
@@ -61,6 +64,7 @@ def delete_group_message(msg_id: str, user_id: str) -> None:
         grp_msg = GroupMessage.objects(id=msg_id, sender=user_id).first()  # type: ignore
         if not grp_msg:
             raise HTTPException(status_code=404, detail="Message not found.")
+        
         grp_msg.delete()
     except HTTPException:
         raise

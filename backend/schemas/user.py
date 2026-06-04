@@ -25,11 +25,11 @@ class UserCreate(BaseModel):
         if not passwd:
             return passwd
         
-        password_val = passwd.get_secret_value()
-        if not re.match(PASSWORD_PATTERN, password_val):
+        password_value = passwd.get_secret_value()
+        if not re.match(PASSWORD_PATTERN, password_value):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         
-        results = zxcvbn(password_val)
+        results = zxcvbn(password_value)
         if results['score'] < 3:
             feedback = results['feedback']['warning'] or "This password is too common or easy to guess."
             raise ValueError(f"Weak password: {feedback}")
@@ -63,14 +63,14 @@ class UserUpdate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, passwd: SecretStr) -> SecretStr:
-        if not passwd:
+        if passwd is None:
             return passwd
         
-        password_val = passwd.get_secret_value()
-        if not re.match(PASSWORD_PATTERN, password_val):
+        password_value = passwd.get_secret_value()
+        if not re.match(PASSWORD_PATTERN, password_value):
             raise ValueError("Password must be at least 8 chars, contain uppercase and lowercase, digit and special character")
         
-        results = zxcvbn(password_val)
+        results = zxcvbn(password_value)
         if results['score'] < 3:
             feedback = results['feedback']['warning'] or "This password is too common or easy to guess."
             raise ValueError(f"Weak password: {feedback}")

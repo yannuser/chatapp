@@ -14,6 +14,7 @@ async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
         sender = User.objects(id=data.sender_id).first()  # type: ignore
         if not sender:
             raise HTTPException(status_code=404, detail="Sender not found")
+        
         conversation = Conversation.objects(id=data.linked_conversation_id).first()  # type: ignore
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
@@ -43,13 +44,17 @@ def update_direct_message(msg_id: str, user_id: str, data: DirectMessageUpdate) 
         msg = DirectMessage.objects(id=msg_id).first()  # type: ignore
         if not msg:
             raise HTTPException(status_code=404, detail="Message not found")
+        
         if str(msg.sender.id) != user_id:
-            raise HTTPException(status_code=403, detail="You do not have the rights to do that")
+            raise HTTPException(status_code=403, detail="You do not have the rights")
+        
         update_data = data.model_dump(exclude_none=True)
         if not update_data:
             return msg
+        
         msg.update(**update_data)
         msg.reload()
+
         return msg
     except HTTPException:
         raise
@@ -63,8 +68,10 @@ def delete_direct_message(msg_id: str, user_id: str) -> None:
         msg = DirectMessage.objects(id=msg_id).first()  # type: ignore
         if not msg:
             raise HTTPException(status_code=404, detail="Message not found")
+        
         if str(msg.sender.id) != user_id:
             raise HTTPException(status_code=403, detail="You do not have the rights to do that")
+        
         msg.delete()
     except HTTPException:
         raise

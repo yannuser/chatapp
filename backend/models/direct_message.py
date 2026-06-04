@@ -7,7 +7,7 @@ class DirectMessage(Document):
     content = StringField(required=True, max_length=3000)
     sender = ReferenceField("User", reverse_delete_rule=CASCADE, required=True)
     linked_conversation = ReferenceField("Conversation", required=True)
-    sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc), required=True)
     updated_at = DateTimeField(required=False)
 
     def clean(self):

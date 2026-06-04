@@ -6,14 +6,19 @@ from fastapi import HTTPException
 
 logger = logging.getLogger("group_service")
 
-def create_groupe(data: GroupCreate) -> Group:
+def create_group(data: GroupCreate) -> Group:
     try:
+        if len(set(data.member_ids)) < 2:
+            raise HTTPException(status_code=400, detail="A group must have at least 2 members")
+        
         members = list(User.objects(id__in=data.member_ids))  # type: ignore
         if len(members) != len(set(data.member_ids)):
             raise HTTPException(status_code=404, detail="One or more users were not found")
+        
         creator = User.objects(id=data.creator_id).first()  # type: ignore
         if not creator:
             raise HTTPException(status_code=404, detail="Creator not found")
+        
         group = Group(title=data.title, description=data.description,
                       members=members, creator=creator)
         group.save()
@@ -30,8 +35,10 @@ def get_by_id(group_id: str, user_id: str) -> Group:
         group = Group.objects(id=group_id).first()  # type: ignore
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
+        
         if all(str(member.id) != user_id for member in group.members):
             raise HTTPException(status_code=403, detail="You are not a member of this group")
+        
         return group
     except HTTPException:
         raise
@@ -53,7 +60,7 @@ def get_by_title(group_name: str, user_id: str) -> Group:
         raise
 
 
-def update_groupe(group_id: str, data: GroupUpdate, user_id: str) -> Group:
+def update_group(group_id: str, data: GroupUpdate, user_id: str) -> Group:
     try:
         group = Group.objects(id=group_id).first()  # type: ignore
         if not group:

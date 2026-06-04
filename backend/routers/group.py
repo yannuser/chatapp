@@ -8,6 +8,8 @@ router = APIRouter()
 @router.post("/", response_model=GroupResponse, status_code=201)
 def create_group_endpoint(group: GroupCreate, current_user=Depends(get_current_user)):
     group.creator_id = str(current_user.id)
+    if group.creator_id not in group.member_ids:
+        group.member_ids.append(group.creator_id)
     return create_groupe(group)
 
 @router.get("/title/{group_name}", response_model=GroupResponse)

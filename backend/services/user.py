@@ -61,7 +61,7 @@ def get_user_by_id(user_id: str) -> User:
         raise
 
 
-def get_by_email(user_email: str) -> User:
+def get_user_by_email(user_email: str) -> User:
     try:
         user = User.objects(email=user_email).first()  # type: ignore
         if not user:
@@ -74,7 +74,7 @@ def get_by_email(user_email: str) -> User:
         raise
 
 
-def get_by_username(user_username: str) -> User:
+def get_user_by_username(user_username: str) -> User:
     try:
         user = User.objects(username=user_username).first()  # type: ignore
         if not user:

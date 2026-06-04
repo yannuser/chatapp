@@ -15,7 +15,7 @@ class GroupCreate(BaseModel):
 class GroupUpdate(BaseModel):
     title : Optional[str] = Field(default=None, max_length=100)
     description : Optional[str] = Field(default=None, max_length=5000)
-    member_ids : Optional[List[str]] = None
+    member_ids: List[str] = Field(min_length=2)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
