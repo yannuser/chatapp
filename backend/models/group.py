@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 class Group(Document):
     title = StringField(max_length=100, default="New Group")
-    description = StringField(max_length=5000, required=True)
+    description = StringField(max_length=5000, required=False)
     members = ListField(ReferenceField("User", reverse_delete_rule=CASCADE))
     creator = ReferenceField("User", reverse_delete_rule=CASCADE, required=True)
     created_at = DateTimeField(default =lambda: datetime.now(timezone.utc), required=True)

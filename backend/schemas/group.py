@@ -4,8 +4,8 @@ from schemas.user import UserResponse
 from datetime import datetime, timezone
 
 class GroupCreate(BaseModel):
-    title : str = Field(max_length=100, default="New Group")
-    description : str | None  = Field(max_length=5000)
+    title : str = Field(max_length=100)
+    description : str | None  = Field(default=None, max_length=5000)
     member_ids : List[str]
     creator_id : str
     created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

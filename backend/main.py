@@ -45,13 +45,14 @@ app.add_middleware(
     allowed_hosts=settings.ALLOWED_HOSTS
 )
 
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(TimeoutMiddleware)
+# Custom Middlewares - Order of execution (Request phase) is bottom to top
 app.add_middleware(RequestSizeLimiterMiddleware)
-app.add_middleware(MaintenanceModeMiddleware)
 app.add_middleware(UserContextMiddleware)
-app.add_middleware(RequestIdMiddleware)
+app.add_middleware(MaintenanceModeMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(TimeoutMiddleware)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(ErrorHandlerMiddleware)
 
 app.add_middleware(
@@ -68,7 +69,6 @@ app.add_middleware(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=500)
-app = RequestSizeLimiterMiddleware(app)
 
 app.include_router(user.router, prefix="/users", tags=["users"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

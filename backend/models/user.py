@@ -10,7 +10,7 @@ def validate_birthdate(given_date : date):
 
 
 def validate_username(given_username):
-    pattern = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
+    pattern = r"^[a-z\d](?:[a-z\d]|[-_](?=[a-z\d])){0,38}$"
     if not re.match(pattern, given_username):
         raise ValueError("Username is not valid")
 

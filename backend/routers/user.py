@@ -3,7 +3,14 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status
 from core.ratelimit import limiter
 from core.security import get_current_user
 from schemas.user import UserCreate, UserUpdate, UserResponse
-from services.user import create_user, update_user, get_user_by_id, get_by_email, get_by_username, delete_user
+from services.user import (
+    create_user,
+    update_user,
+    get_user_by_id,
+    get_user_by_email,
+    get_user_by_username,
+    delete_user,
+)
 
 
 router = APIRouter()
@@ -17,12 +24,12 @@ def create_user_endpoint(user: UserCreate, request: Request):
 
 @router.get("/email/{email}", response_model=UserResponse)
 def get_user_by_email_endpoint(email: str, current_user=Depends(get_current_user)):
-    return get_by_email(email)
+    return get_user_by_email(email)
 
 
 @router.get("/username/{username}", response_model=UserResponse)
 def get_user_by_username_endpoint(username: str, current_user=Depends(get_current_user)):
-    return get_by_username(username)
+    return get_user_by_username(username)
 
 
 @router.get("/{user_id}", response_model=UserResponse)

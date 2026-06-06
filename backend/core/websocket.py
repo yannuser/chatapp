@@ -14,6 +14,8 @@ class ConnectionManager:
 
     async def start(self):
         """Initializes Redis Pub/Sub and starts the listening task."""
+        if self.redis_client is None:
+            return
         self.pubsub = self.redis_client.pubsub()
         await self.pubsub.subscribe("user_messages", "broadcast_messages")
         self._listener_task = asyncio.create_task(self._redis_listener())
@@ -24,6 +26,8 @@ class ConnectionManager:
             self._listener_task.cancel()
         if self.pubsub:
             await self.pubsub.unsubscribe()
+        if self.redis_client:
+            await self.redis_client.aclose()
 
     async def _redis_listener(self):
         """Listens to Redis messages and routes them to local WebSockets."""
@@ -54,6 +58,10 @@ class ConnectionManager:
 
     async def send_personal_message(self, user_id: str, message: dict):
         """Publishes a message to Redis to reach the user regardless of server instance."""
+        if self.redis_client is None:
+            await self._local_send(user_id, message)
+            return
+
         payload = {
             "target_user_id": user_id,
             "payload": message
@@ -62,6 +70,10 @@ class ConnectionManager:
 
     async def broadcast(self, message: dict):
         """Publishes a broadcast message to Redis."""
+        if self.redis_client is None:
+            await self._local_broadcast(message)
+            return
+
         await self.redis_client.publish("broadcast_messages", json.dumps(message))
 
     async def _local_send(self, user_id: str, message: dict):

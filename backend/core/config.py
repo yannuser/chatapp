@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
+    REDIS_ENABLED: bool = False
 
     MAX_LOGIN_ATTEMPTS: int = 5
     LOCKOUT_DURATION_MINUTES: int = 15
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = ["*"]
 
     DEBUG: bool = False
+    TESTING: bool = False
 
     MAINTENANCE_MODE: bool = False
     MAX_REQUEST_SIZE: int = 5 * 1024 * 1024  # 5MB
