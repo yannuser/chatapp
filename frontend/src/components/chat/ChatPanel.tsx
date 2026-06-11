@@ -6,7 +6,7 @@ import { sendMessage } from '../../api/messages'
 import { sendGroupMessage } from '../../api/groupMessages'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
-import { useWebSocket } from '../../hooks/useWebSocket'
+import { useWs } from '../../contexts/WebSocketContext'
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
@@ -19,7 +19,7 @@ export default function ChatPanel({ type }: Props) {
   const { id } = useParams<{ id: string }>()
   const me = useAuthStore((s) => s.user!)
   const { addToast } = useToastStore()
-  const { send: wsSend } = useWebSocket()
+  const { send: wsSend } = useWs()
 
   const { data: conversation } = useQuery({
     queryKey: ['conversation', id],

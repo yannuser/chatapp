@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
+import { refresh, getMe } from './api/auth'
 import AppShell from './pages/AppShell'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -7,16 +9,42 @@ import SettingsPage from './pages/SettingsPage'
 import ChatPanel from './components/chat/ChatPanel'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((s) => s.user)
-  return user ? <>{children}</> : <Navigate to="/login" replace />
+  const { status } = useAuthStore()
+  if (status === 'loading') return null
+  return status === 'authenticated' ? <>{children}</> : <Navigate to="/login" replace />
 }
 
 function GuestRoute({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((s) => s.user)
-  return user ? <Navigate to="/" replace /> : <>{children}</>
+  const { status } = useAuthStore()
+  if (status === 'loading') return null
+  return status === 'authenticated' ? <Navigate to="/" replace /> : <>{children}</>
 }
 
 export default function App() {
+  const { status, setAuth, clearAuth } = useAuthStore()
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const { access_token } = await refresh()
+        // Set an empty user first so the interceptor has the token for getMe
+        setAuth({} as any, access_token)
+        const user = await getMe()
+        setAuth(user, access_token)
+      } catch (err) {
+        clearAuth()
+      }
+    }
+
+    if (status === 'loading') {
+      bootstrap()
+    }
+  }, [status, setAuth, clearAuth])
+
+  if (status === 'loading') {
+    return <div className="min-h-screen bg-primary" />
+  }
+
   return (
     <BrowserRouter>
       <Routes>
