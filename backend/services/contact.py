@@ -70,6 +70,11 @@ def add_contact(user_id: str, contact_id: str) -> Contact:
         if any(str(existing.id) == contact_id for existing in contact_list.contacts):
             raise HTTPException(status_code=400, detail="Contact already exists")
 
+        from models.settings import Settings
+        target_settings = Settings.objects(user=contact_id).first()  # type: ignore
+        if target_settings and target_settings.privacy.who_can_add_me == "nobody":
+            raise HTTPException(status_code=403, detail="This user does not accept contact requests")
+
         contact_list.contacts.append(contact_user)
         contact_list.save()
         return contact_list

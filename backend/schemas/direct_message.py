@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.conversation import ConversationResponse
 from schemas.user import UserResponse
 from datetime import datetime, timezone
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 
 class DirectMessageSave(BaseModel):
@@ -33,3 +33,8 @@ class DirectMessageResponse(BaseModel):
         if isinstance(value, str):
             return value
         return str(value)
+
+
+class DirectMessagePage(BaseModel):
+    messages: List[DirectMessageResponse]
+    next_cursor: Optional[str] = None

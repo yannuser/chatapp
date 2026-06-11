@@ -7,7 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
 from core.config import settings
 from core.database import connect_db, disconnect_db
-from routers import user, conversation, direct_message, group, group_message, contact, auth, websocket
+from routers import user, conversation, direct_message, group, group_message, contact, auth, websocket, settings
 from core.ratelimit import limiter, RateLimitExceeded, _rate_limit_exceeded_handler
 from core.middlewares.security_headers import SecurityHeadersMiddleware
 from core.middlewares.maintenance import MaintenanceModeMiddleware
@@ -78,3 +78,4 @@ app.include_router(direct_message.router, prefix="/direct-messages", tags=["dire
 app.include_router(group.router, prefix="/groups", tags=["groups"])
 app.include_router(group_message.router, prefix="/group-messages", tags=["group_messages"])
 app.include_router(contact.router, prefix="/contacts", tags=["contacts"])
+app.include_router(settings.router, prefix="/settings", tags=["settings"])

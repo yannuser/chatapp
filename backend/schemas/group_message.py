@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.user import UserResponse
 from schemas.group import GroupResponse
 from datetime import datetime, timezone
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 class GroupMessageCreate(BaseModel):
     group_id : str
@@ -32,3 +32,8 @@ class GroupMessageResponse(BaseModel):
         if isinstance(value, str):
             return value
         return str(value)
+
+
+class GroupMessagePage(BaseModel):
+    messages: List[GroupMessageResponse]
+    next_cursor: Optional[str] = None
