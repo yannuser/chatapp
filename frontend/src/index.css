@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────────── */
+:root {
+  --bg-primary: #F8F9FA;
+  --bg-secondary: #FFFFFF;
+  --bg-hover: #F0F2F5;
+  --bg-message-sent: #0284C7;
+  --bg-message-received: #FFFFFF;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-on-accent: #FFFFFF;
+  --border: #E5E7EB;
+  --accent: #0284C7;
+  --accent-hover: #0369A1;
+  --accent-subtle: #E0F2FE;
+  --online: #22C55E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #111B21;
+  --bg-secondary: #1F2C34;
+  --bg-hover: #2A3942;
+  --bg-message-sent: #005C4B;
+  --bg-message-received: #1F2C34;
+  --text-primary: #E9EDEF;
+  --text-secondary: #8696A0;
+  --text-on-accent: #FFFFFF;
+  --border: #2A3942;
+  --accent: #0284C7;
+  --accent-hover: #38BDF8;
+  --accent-subtle: #0C2A3A;
+  --online: #22C55E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --shadow: none;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ── Semantic color utilities ──────────────────────────────────── */
+.bg-primary     { background-color: var(--bg-primary); }
+.bg-secondary   { background-color: var(--bg-secondary); }
+.bg-hover       { background-color: var(--bg-hover); }
+.bg-accent      { background-color: var(--accent); }
+.bg-accent-subtle { background-color: var(--accent-subtle); }
+.bg-msg-sent    { background-color: var(--bg-message-sent); }
+.bg-msg-received { background-color: var(--bg-message-received); }
+.bg-danger      { background-color: var(--danger); }
+
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-on-accent { color: var(--text-on-accent); }
+.text-accent    { color: var(--accent); }
+.text-danger    { color: var(--danger); }
+.text-warning   { color: var(--warning); }
+.text-online    { color: var(--online); }
+
+.border-default { border-color: var(--border); }
+
+.app-shadow     { box-shadow: var(--shadow); }
+
+/* ── Scrollbars ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Message bubble shapes ─────────────────────────────────────── */
+.bubble-sent {
+  border-radius: 12px 8px 12px 12px;
+}
+.bubble-received {
+  border-radius: 8px 12px 12px 12px;
+}
+
+/* ── Skeleton animation ────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border) 50%, var(--bg-hover) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+
+/* ── Typing dots ───────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40%           { opacity: 1; }
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  animation: blink 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Textarea auto-resize ──────────────────────────────────────── */
+textarea.auto-resize {
+  field-sizing: content;
+  max-height: 96px;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* ── Hover utility ─────────────────────────────────────────────── */
+.hover-bg:hover { background-color: var(--bg-hover); }
