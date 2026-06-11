@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from core.security import get_current_user
+from core.ratelimit import limiter
 from schemas.direct_message import DirectMessageSave, DirectMessageUpdate, DirectMessageResponse, DirectMessagePage
 from services.direct_message import (
     get_conversation_messages,
@@ -22,7 +23,8 @@ def get_direct_messages_endpoint(
     return get_conversation_messages(conversation_id, str(current_user.id), before, limit)
 
 @router.post("/", response_model=DirectMessageResponse, status_code=201)
-async def create_direct_message_endpoint(msg: DirectMessageSave, current_user=Depends(get_current_user)):
+@limiter.limit("30 per minute")
+async def create_direct_message_endpoint(msg: DirectMessageSave, request: Request, current_user=Depends(get_current_user)):
     msg.sender_id = str(current_user.id)
     return await create_direct_message(msg)
 

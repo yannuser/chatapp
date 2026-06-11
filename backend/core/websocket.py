@@ -1,8 +1,11 @@
 import json
 import asyncio
+import logging
 from fastapi import WebSocket
 from typing import Dict, List
 from core.redis import async_redis_client
+
+logger = logging.getLogger("websocket_manager")
 
 
 class ConnectionManager:
@@ -42,7 +45,7 @@ class ConnectionManager:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print(f"REDIS LISTENER ERROR: {e}")
+            logger.error(f"REDIS LISTENER ERROR: {e}", exc_info=True)
 
     async def connect(self, user_id: str, websocket: WebSocket):
         await websocket.accept()

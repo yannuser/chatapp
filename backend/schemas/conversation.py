@@ -5,7 +5,7 @@ from schemas.user import UserResponse
 
 
 class ConversationCreate(BaseModel):
-    member_ids : List[str] = Field(max_length=2)
+    member_ids : List[str] = Field(min_length=2, max_length=2)
     created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at : Optional[datetime] = None
 

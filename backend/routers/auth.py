@@ -21,11 +21,19 @@ def login_endpoint(credentials: LoginRequest, response: Response, request: Reque
         key="refresh_token",
         value=tokens["refresh_token"],
         httponly=True,
-        secure=True,  
+        secure=True,
         samesite="lax",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
-    
+    response.set_cookie(
+        key="access_token",
+        value=tokens["access_token"],
+        httponly=False,
+        secure=True,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
     return TokenResponse(access_token=tokens["access_token"])
 
 
@@ -60,9 +68,17 @@ def refresh_token_endpoint(response: Response, request: Request, refresh_token: 
             httponly=True,
             secure=True,
             samesite="lax",
-            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+            max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         )
-        
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=False,
+            secure=True,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        )
+
         return TokenResponse(access_token=new_access_token)
     except Exception:
         raise _credentials_exception()
@@ -105,6 +121,7 @@ def logout_endpoint(
             pass
 
     response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token")
     return {"detail": "Successfully logged out"}
 
 

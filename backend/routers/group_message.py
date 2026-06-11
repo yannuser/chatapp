@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from core.security import get_current_user
+from core.ratelimit import limiter
 from schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse, GroupMessagePage
 from services.group_message import (
     get_group_messages,
@@ -22,7 +23,8 @@ def get_group_messages_endpoint(
     return get_group_messages(group_id, str(current_user.id), before, limit)
 
 @router.post("/", response_model=GroupMessageResponse, status_code=201)
-async def create_group_message_endpoint(msg: GroupMessageCreate, current_user=Depends(get_current_user)):
+@limiter.limit("30 per minute")
+async def create_group_message_endpoint(msg: GroupMessageCreate, request: Request, current_user=Depends(get_current_user)):
     msg.sender_id = str(current_user.id)
     return await create_group_message(msg)
 

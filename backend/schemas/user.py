@@ -6,7 +6,7 @@ import re
 from zxcvbn import zxcvbn
 
 
-USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$"
+USERNAME_PATTERN = r"^[a-z\d](?:[a-z\d]|[-_](?=[a-z\d])){0,38}$"
 PASSWORD_PATTERN = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$"
 
 class UserCreate(BaseModel):

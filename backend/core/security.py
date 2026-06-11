@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
-from fastapi import Depends, HTTPException, status, WebSocket, Query
+from fastapi import Depends, HTTPException, status, WebSocket
 from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
@@ -122,12 +122,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-async def get_current_user_ws(
-    websocket: WebSocket,
-    token: str | None = Query(None),
-):
+async def get_current_user_ws(websocket: WebSocket):
     from models.user import User
 
+    token = websocket.cookies.get("access_token")
     if token is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return None
