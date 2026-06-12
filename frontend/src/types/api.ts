@@ -9,11 +9,19 @@ export interface UserResponse {
   updated_at?: string
 }
 
+export interface LastMessagePreview {
+  id: string
+  content: string
+  sender_id: string
+  sent_at: string
+}
+
 export interface ConversationResponse {
   id: string
   members: UserResponse[]
   created_at: string
   updated_at?: string
+  last_message?: LastMessagePreview | null
 }
 
 export interface DirectMessageResponse {
@@ -38,6 +46,7 @@ export interface GroupResponse {
   creator: UserResponse
   created_at: string
   updated_at?: string
+  last_message?: LastMessagePreview | null
 }
 
 export interface GroupMessageResponse {
@@ -95,7 +104,6 @@ export interface TokenResponse {
   access_token: string
 }
 
-// WebSocket event payloads
 export type WsEvent =
   | ({ type: 'new_direct_message' } & DirectMessageResponse)
   | ({ type: 'updated_direct_message' } & DirectMessageResponse)
@@ -107,6 +115,7 @@ export type WsEvent =
   | { type: 'typing_group'; group_id: string; user_id: string; is_typing: boolean }
   | { type: 'user_online'; user_id: string }
   | { type: 'user_offline'; user_id: string }
+  | { type: 'online_contacts'; user_ids: string[] }
   | ({ type: 'group_created' } & GroupResponse)
   | ({ type: 'group_updated' } & GroupResponse)
   | { type: 'group_deleted'; group_id: string }

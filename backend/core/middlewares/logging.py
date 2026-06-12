@@ -31,7 +31,6 @@ class LoggingMiddleware:
             if settings.DEBUG and message["type"] == "http.request":
                 body += message.get("body", b"")
                 if not message.get("more_body", False):
-                    # Request body fully received
                     try:
                         request_body = json.loads(body)
                     except Exception:
@@ -57,7 +56,6 @@ class LoggingMiddleware:
                 status_code[0] = message["status"]
             
             if message["type"] == "http.response.body":
-                # Only log end on the last chunk
                 if not message.get("more_body", False):
                     process_time = time.time() - start_time
                     logger.info(f"RID: {request_id} | End | Status: {status_code[0]} | Time: {process_time:.4f}s")

@@ -1,9 +1,9 @@
-import logging
+﻿import logging
 from datetime import datetime, timezone
 from models.group_message import GroupMessage
 from models.group import Group
 from models.user import User
-from schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse
+from schemas.group_message import GroupMessageCreate, GroupMessageUpdate, GroupMessageResponse
 from fastapi import HTTPException
 from core.websocket import manager
 
@@ -55,6 +55,8 @@ async def create_group_message(data: GroupMessageCreate) -> GroupMessage:
         grp_msg = GroupMessage(group=group, content=data.content, sender=sender)
         grp_msg.save()
 
+        group.update(set__updated_at=grp_msg.sent_at)
+
         payload = GroupMessageResponse.model_validate(grp_msg).model_dump(mode="json")
         payload["type"] = "new_group_message"
         for member in group.members:
@@ -68,7 +70,7 @@ async def create_group_message(data: GroupMessageCreate) -> GroupMessage:
         raise
 
 
-async def update_group_message(msg_id: str, user_id: str, data: GroupMessageupdate) -> GroupMessage:
+async def update_group_message(msg_id: str, user_id: str, data: GroupMessageUpdate) -> GroupMessage:
     try:
         grp_msg = GroupMessage.objects(id=msg_id, sender=user_id).first()  # type: ignore
         if not grp_msg:

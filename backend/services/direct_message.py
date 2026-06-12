@@ -63,6 +63,8 @@ async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
         msg = DirectMessage(content=data.content, sender=sender, linked_conversation=conversation)
         msg.save()
 
+        conversation.update(set__updated_at=msg.sent_at)
+
         payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
         payload["type"] = "new_direct_message"
         for member in conversation.members:

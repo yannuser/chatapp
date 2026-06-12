@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { differenceInYears, parseISO } from 'date-fns'
 import { updateUser } from '../../api/users'
+import { apiErrorDetail } from '../../lib/apiError'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
 import Avatar from '../ui/Avatar'
@@ -25,13 +26,13 @@ export default function ProfileTab() {
       setEditing(false)
       addToast('Profile updated', 'success')
     },
-    onError: (e: any) => addToast(e?.response?.data?.detail ?? 'Update failed'),
+    onError: (e) => addToast(apiErrorDetail(e, 'Update failed')),
   })
 
   const changePassword = useMutation({
     mutationFn: () => updateUser(user!.id, { password: pwForm.password }),
     onSuccess: () => { setPwForm({ password: '', confirm: '' }); addToast('Password changed', 'success') },
-    onError: (e: any) => addToast(e?.response?.data?.detail ?? 'Password change failed'),
+    onError: (e) => addToast(apiErrorDetail(e, 'Password change failed')),
   })
 
   const age = user?.birthdate ? differenceInYears(new Date(), parseISO(user.birthdate)) : null

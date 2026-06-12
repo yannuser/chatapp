@@ -1,7 +1,7 @@
 import logging
 from models.conversation import Conversation
 from models.user import User
-from schemas.conversation import ConversationCreate
+from schemas.conversation import ConversationCreate, ConversationResponse, LastMessagePreview
 from fastapi import HTTPException
 
 logger = logging.getLogger("conversation_service")
@@ -58,9 +58,22 @@ def delete_conversation(convo_id: str, user_id: str):
         raise
 
 
-def get_user_conversations(user_id: str) -> list[Conversation]:
+def get_user_conversations(user_id: str) -> list[ConversationResponse]:
     try:
-        return list(Conversation.objects(members=user_id))  # type: ignore
+        from models.direct_message import DirectMessage
+        out = []
+        for convo in Conversation.objects(members=user_id):  # type: ignore
+            resp = ConversationResponse.model_validate(convo)
+            last = DirectMessage.objects(linked_conversation=convo.id).order_by("-sent_at").first()  # type: ignore
+            if last:
+                resp.last_message = LastMessagePreview(
+                    id=str(last.id),
+                    content=last.content,
+                    sender_id=str(last.sender.id),
+                    sent_at=last.sent_at,
+                )
+            out.append(resp)
+        return out
     except Exception as e:
         logger.error(f"GET USER CONVERSATIONS ERROR: {str(e)}", exc_info=True)
         raise

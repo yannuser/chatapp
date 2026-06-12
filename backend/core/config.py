@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     TESTING: bool = False
 
     MAINTENANCE_MODE: bool = False
-    MAX_REQUEST_SIZE: int = 5 * 1024 * 1024  # 5MB
+    MAX_REQUEST_SIZE: int = 5 * 1024 * 1024
     REQUEST_TIMEOUT: int = 30 
     SESSION_SECRET_KEY: str 
 

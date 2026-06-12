@@ -1,9 +1,9 @@
-from datetime import datetime
+﻿from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 from core.security import get_current_user
 from core.ratelimit import limiter
-from schemas.group_message import GroupMessageCreate, GroupMessageupdate, GroupMessageResponse, GroupMessagePage
+from schemas.group_message import GroupMessageCreate, GroupMessageUpdate, GroupMessageResponse, GroupMessagePage
 from services.group_message import (
     get_group_messages,
     create_group_message,
@@ -29,7 +29,7 @@ async def create_group_message_endpoint(msg: GroupMessageCreate, request: Reques
     return await create_group_message(msg)
 
 @router.put("/{msg_id}", response_model=GroupMessageResponse)
-async def update_group_message_endpoint(msg_id: str, msg_update: GroupMessageupdate, current_user=Depends(get_current_user)):
+async def update_group_message_endpoint(msg_id: str, msg_update: GroupMessageUpdate, current_user=Depends(get_current_user)):
     return await update_group_message(msg_id, str(current_user.id), msg_update)
 
 @router.delete("/{msg_id}", status_code=204)

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional, Any
 from schemas.user import UserResponse
+from schemas.conversation import LastMessagePreview
 from datetime import datetime, timezone
 
 class GroupCreate(BaseModel):
@@ -28,6 +29,7 @@ class GroupResponse(BaseModel):
     creator : UserResponse
     created_at : datetime
     updated_at : Optional[datetime] = None
+    last_message : Optional[LastMessagePreview] = None
 
     @field_validator("id", mode="before")
     @classmethod

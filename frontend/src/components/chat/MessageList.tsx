@@ -47,20 +47,17 @@ export default function MessageList({ roomId, type, members }: Props) {
   })
 
   const allMessages: AnyMessage[] = data?.pages.slice().reverse().flatMap((p) => p.messages as AnyMessage[]) ?? []
+  const pagesLength = data?.pages.length ?? 0
 
   const memberNames: Record<string, string> = {}
   members.forEach((m) => { memberNames[m.id] = `${m.first_name} ${m.last_name}` })
 
-  // Scroll to bottom on initial load
   useEffect(() => {
     const el = containerRef.current
-    if (!el || !data) return
-    if (data.pages.length === 1) {
-      el.scrollTop = el.scrollHeight
-    }
-  }, [data?.pages.length])
+    if (!el || pagesLength !== 1) return
+    el.scrollTop = el.scrollHeight
+  }, [pagesLength])
 
-  // Maintain scroll position when loading older messages
   useEffect(() => {
     const el = containerRef.current
     if (!el || !isFetchingNextPage) return
@@ -70,12 +67,11 @@ export default function MessageList({ roomId, type, members }: Props) {
   useEffect(() => {
     const el = containerRef.current
     if (!el || isFetchingNextPage) return
-    if (data && data.pages.length > 1) {
+    if (pagesLength > 1) {
       el.scrollTop = el.scrollHeight - prevScrollHeight.current
     }
-  }, [data?.pages.length, isFetchingNextPage])
+  }, [pagesLength, isFetchingNextPage])
 
-  // Auto-scroll to bottom on new message if near bottom
   const lastMsg = allMessages[allMessages.length - 1]
   useEffect(() => {
     const el = containerRef.current

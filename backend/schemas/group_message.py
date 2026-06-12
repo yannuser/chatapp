@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+﻿from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.user import UserResponse
 from schemas.group import GroupResponse
 from datetime import datetime, timezone
@@ -12,7 +12,7 @@ class GroupMessageCreate(BaseModel):
     updated_at : Optional[datetime] = None
 
 
-class GroupMessageupdate(BaseModel):
+class GroupMessageUpdate(BaseModel):
     content : str = Field(max_length=3000)
     updated_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

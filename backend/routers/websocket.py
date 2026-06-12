@@ -81,6 +81,16 @@ async def websocket_endpoint(
         for cid in contact_ids:
             await manager.send_personal_message(cid, {"type": "user_online", "user_id": user_id})
 
+    online_ids = []
+    for cid in contact_ids:
+        if not manager.is_connected(cid):
+            continue
+        contact_settings = Settings.objects(user=cid).first()  # type: ignore
+        if contact_settings and not contact_settings.privacy.show_online_status:
+            continue
+        online_ids.append(cid)
+    await websocket.send_json({"type": "online_contacts", "user_ids": online_ids})
+
     try:
         while True:
             raw = await websocket.receive_text()

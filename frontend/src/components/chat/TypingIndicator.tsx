@@ -8,7 +8,8 @@ interface Props {
 
 export default function TypingIndicator({ roomId, memberNames }: Props) {
   const me = useAuthStore((s) => s.user?.id)
-  const typers = useTypingStore((s) => (s.typing[roomId] ?? []).filter((id) => id !== me))
+  const typingIds = useTypingStore((s) => s.typing[roomId])
+  const typers = (typingIds ?? []).filter((id) => id !== me)
 
   if (!typers.length) return null
 

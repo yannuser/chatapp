@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login, getMe } from '../api/auth'
+import { apiErrorDetail } from '../lib/apiError'
 import { useAuthStore } from '../stores/authStore'
 import { useToastStore } from '../stores/toastStore'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { setAuth, setToken } = useAuthStore()
   const { addToast } = useToastStore()
   const [form, setForm] = useState({ login: '', password: '' })
   const [loading, setLoading] = useState(false)
@@ -17,11 +18,12 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { access_token } = await login(form.login.trim(), form.password)
+      setToken(access_token)
       const user = await getMe()
       setAuth(user, access_token)
       navigate('/', { replace: true })
-    } catch (err: any) {
-      addToast(err?.response?.data?.detail ?? 'Invalid credentials')
+    } catch (err) {
+      addToast(apiErrorDetail(err, 'Invalid credentials'))
     } finally {
       setLoading(false)
     }

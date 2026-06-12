@@ -2,15 +2,29 @@ import logging
 from models.group import Group
 from models.user import User
 from schemas.group import GroupCreate, GroupUpdate, GroupResponse
+from schemas.conversation import LastMessagePreview
 from fastapi import HTTPException
 from core.websocket import manager
 
 logger = logging.getLogger("group_service")
 
 
-def get_user_groups(user_id: str) -> list[Group]:
+def get_user_groups(user_id: str) -> list[GroupResponse]:
     try:
-        return list(Group.objects(members=user_id))  # type: ignore
+        from models.group_message import GroupMessage
+        out = []
+        for group in Group.objects(members=user_id):  # type: ignore
+            resp = GroupResponse.model_validate(group)
+            last = GroupMessage.objects(group=group.id).order_by("-sent_at").first()  # type: ignore
+            if last:
+                resp.last_message = LastMessagePreview(
+                    id=str(last.id),
+                    content=last.content,
+                    sender_id=str(last.sender.id),
+                    sent_at=last.sent_at,
+                )
+            out.append(resp)
+        return out
     except Exception as e:
         logger.error(f"GET USER GROUPS ERROR: {str(e)}", exc_info=True)
         raise

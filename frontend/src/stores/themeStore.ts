@@ -25,10 +25,8 @@ export const useThemeStore = create<ThemeState>((set) => ({
   },
 }))
 
-// Apply on module load
 applyTheme(useThemeStore.getState().theme)
 
-// Keep system theme in sync
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (useThemeStore.getState().theme === 'system') {
     applyTheme('system')

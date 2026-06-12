@@ -83,7 +83,6 @@ export default function MessageBubble({
         </span>
       </div>
 
-      {/* Context menu */}
       {menu && (
         <div
           className="fixed z-50 bg-secondary border border-default rounded-xl app-shadow py-1 text-sm min-w-[140px]"

@@ -3,6 +3,7 @@ import { create } from 'zustand'
 interface PresenceState {
   onlineUsers: Set<string>
   setOnline: (userId: string) => void
+  setManyOnline: (userIds: string[]) => void
   setOffline: (userId: string) => void
 }
 
@@ -10,6 +11,8 @@ export const usePresenceStore = create<PresenceState>((set) => ({
   onlineUsers: new Set(),
   setOnline: (userId) =>
     set((s) => ({ onlineUsers: new Set([...s.onlineUsers, userId]) })),
+  setManyOnline: (userIds) =>
+    set((s) => ({ onlineUsers: new Set([...s.onlineUsers, ...userIds]) })),
   setOffline: (userId) =>
     set((s) => {
       const next = new Set(s.onlineUsers)

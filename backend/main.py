@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     await ws_manager.start()
 
     
-    yield  # This hands control back to the FastAPI app
+    yield
     
     print("Shutting down...")
     await ws_manager.stop()
@@ -46,7 +46,6 @@ app.add_middleware(
     allowed_hosts=settings.ALLOWED_HOSTS
 )
 
-# Custom Middlewares - Order of execution (Request phase) is bottom to top
 app.add_middleware(RequestSizeLimiterMiddleware)
 app.add_middleware(UserContextMiddleware)
 app.add_middleware(MaintenanceModeMiddleware)

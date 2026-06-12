@@ -38,7 +38,7 @@ def login_endpoint(credentials: LoginRequest, response: Response, request: Reque
 
 
 @router.post("/refresh", response_model=TokenResponse)
-@limiter.limit("5 per minute")
+@limiter.limit("30 per minute")
 def refresh_token_endpoint(response: Response, request: Request, refresh_token: str | None = Cookie(None)):
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")

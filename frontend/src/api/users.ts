@@ -16,6 +16,9 @@ export const getUserById = (id: string) =>
 export const getUserByUsername = (username: string) =>
   api.get<UserResponse>(`/users/username/${username}`).then((r) => r.data)
 
+export const searchUsers = (q: string) =>
+  api.get<UserResponse[]>('/users/search', { params: { q } }).then((r) => r.data)
+
 export const updateUser = (
   id: string,
   data: Partial<{

@@ -1,8 +1,10 @@
 import logging
+import re
 from core.security import hash_password
 from models.user import User
 from schemas.user import UserCreate, UserUpdate
 from fastapi import HTTPException
+from mongoengine.queryset.visitor import Q
 
 logger = logging.getLogger("user_service")
 
@@ -84,6 +86,22 @@ def get_user_by_username(user_username: str) -> User:
         raise
     except Exception as e:
         logger.error(f"GET USER BY USERNAME ERROR: {str(e)}", exc_info=True)
+        raise
+
+
+def search_users(query: str, exclude_id: str, limit: int = 20) -> list[User]:
+    try:
+        term = re.escape(query.strip())
+        if not term:
+            return []
+        return list(
+            User.objects(  # type: ignore
+                (Q(username__icontains=term) | Q(email__icontains=term))
+                & Q(id__ne=exclude_id)
+            ).limit(limit)
+        )
+    except Exception as e:
+        logger.error(f"SEARCH USERS ERROR: {str(e)}", exc_info=True)
         raise
 
 

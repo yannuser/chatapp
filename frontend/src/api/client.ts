@@ -1,8 +1,8 @@
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { useAuthStore } from '../stores/authStore'
 
 const api = axios.create({
-  baseURL: '/',
+  baseURL: '/api',
   withCredentials: true,
 })
 
@@ -42,15 +42,17 @@ api.interceptors.response.use(
       try {
         const { data } = await api.post('/auth/refresh')
         const token: string = data.access_token
-        const { user } = useAuthStore.getState()
-        useAuthStore.getState().setAuth(user!, token)
+        useAuthStore.getState().setToken(token)
         drainQueue(null, token)
         original.headers.Authorization = `Bearer ${token}`
         return api(original)
       } catch (e) {
         drainQueue(e, null)
-        useAuthStore.getState().clearAuth()
-        window.location.href = '/login'
+        const refreshStatus = isAxiosError(e) ? e.response?.status : undefined
+        if (refreshStatus === 401 || refreshStatus === 403) {
+          useAuthStore.getState().clearAuth()
+          window.location.href = '/login'
+        }
         return Promise.reject(e)
       } finally {
         isRefreshing = false

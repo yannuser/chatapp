@@ -4,7 +4,8 @@ import { useChatStore } from '../../stores/chatStore'
 import { usePresenceStore } from '../../stores/presenceStore'
 
 interface Props {
-  id: string
+  unreadId: string
+  presenceUserId?: string
   name: string
   lastMessage?: string
   timestamp?: string
@@ -20,10 +21,12 @@ function fmtTime(ts?: string) {
 }
 
 export default function ConversationItem({
-  id, name, lastMessage, timestamp, isGroup, isActive, onClick,
+  unreadId, presenceUserId, name, lastMessage, timestamp, isGroup, isActive, onClick,
 }: Props) {
-  const unread = useChatStore((s) => s.unreadCounts[id] ?? 0)
-  const isOnline = usePresenceStore((s) => !isGroup && s.onlineUsers.has(id))
+  const unread = useChatStore((s) => s.unreadCounts[unreadId] ?? 0)
+  const isOnline = usePresenceStore(
+    (s) => !!presenceUserId && s.onlineUsers.has(presenceUserId)
+  )
 
   return (
     <button

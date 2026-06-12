@@ -4,9 +4,10 @@ import { useAuthStore } from '../stores/authStore'
 import { useChatStore } from '../stores/chatStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useTypingStore } from '../stores/typingStore'
+import { appendMessage } from '../lib/messageCache'
 import type { WsEvent, DirectMessageResponse, GroupMessageResponse } from '../types/api'
 
-const WS_URL = '/ws'
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ws`
 const MAX_RETRIES = 5
 
 export function useWebSocket() {
@@ -14,9 +15,10 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
   const retriesRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const connectRef = useRef<() => void>(() => {})
   const { accessToken } = useAuthStore()
   const { activeConversationId, activeGroupId, incrementUnread, setLastMessage } = useChatStore()
-  const { setOnline, setOffline } = usePresenceStore()
+  const { setOnline, setManyOnline, setOffline } = usePresenceStore()
   const { setTyping } = useTypingStore()
 
   const activeConvRef = useRef(activeConversationId)
@@ -28,15 +30,7 @@ export function useWebSocket() {
     switch (evt.type) {
       case 'new_direct_message': {
         const convId = evt.linked_conversation.id
-        qc.setQueryData<{ pages: { messages: DirectMessageResponse[]; next_cursor: string | null }[] }>(
-          ['messages', convId],
-          (old) => {
-            if (!old) return old
-            const pages = [...old.pages]
-            pages[0] = { ...pages[0], messages: [...pages[0].messages, evt] }
-            return { ...old, pages }
-          }
-        )
+        appendMessage(qc, ['messages', convId], evt)
         setLastMessage(convId, { kind: 'dm', msg: evt })
         qc.invalidateQueries({ queryKey: ['conversations'] })
         if (activeConvRef.current !== convId) incrementUnread(convId)
@@ -73,15 +67,7 @@ export function useWebSocket() {
       }
       case 'new_group_message': {
         const groupId = evt.group.id
-        qc.setQueryData<{ pages: { messages: GroupMessageResponse[]; next_cursor: string | null }[] }>(
-          ['group-messages', groupId],
-          (old) => {
-            if (!old) return old
-            const pages = [...old.pages]
-            pages[0] = { ...pages[0], messages: [...pages[0].messages, evt] }
-            return { ...old, pages }
-          }
-        )
+        appendMessage(qc, ['group-messages', groupId], evt)
         setLastMessage(groupId, { kind: 'group', msg: evt })
         qc.invalidateQueries({ queryKey: ['groups'] })
         if (activeGroupRef.current !== groupId) incrementUnread(groupId)
@@ -128,6 +114,9 @@ export function useWebSocket() {
       case 'user_offline':
         setOffline(evt.user_id)
         break
+      case 'online_contacts':
+        setManyOnline(evt.user_ids)
+        break
       case 'group_created':
       case 'group_updated':
       case 'group_deleted':
@@ -135,7 +124,7 @@ export function useWebSocket() {
         qc.invalidateQueries({ queryKey: ['groups'] })
         break
     }
-  }, [qc, incrementUnread, setLastMessage, setOnline, setOffline, setTyping])
+  }, [qc, incrementUnread, setLastMessage, setOnline, setManyOnline, setOffline, setTyping])
 
   const connect = useCallback(() => {
     if (!accessToken) return
@@ -148,7 +137,9 @@ export function useWebSocket() {
       try {
         const evt = JSON.parse(e.data) as WsEvent
         handleEvent(evt)
-      } catch {}
+      } catch {
+        // Ignore malformed frames
+      }
     }
 
     ws.onclose = () => {
@@ -156,12 +147,14 @@ export function useWebSocket() {
       if (retriesRef.current < MAX_RETRIES) {
         const delay = Math.min(1000 * 2 ** retriesRef.current, 30000)
         retriesRef.current++
-        timerRef.current = setTimeout(connect, delay)
+        timerRef.current = setTimeout(() => connectRef.current(), delay)
       }
     }
 
     ws.onerror = () => ws.close()
   }, [accessToken, handleEvent])
+
+  useEffect(() => { connectRef.current = connect }, [connect])
 
   useEffect(() => {
     if (!accessToken) return

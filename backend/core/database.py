@@ -5,14 +5,12 @@ from .config import settings
 
 def connect_db():
     try:
-        # We use a short serverSelectionTimeoutMS for the initial connection check
         mongoengine.connect(
             db=settings.MONGO_DB,
             host=settings.MONGO_URI,
             alias="default",
-            serverSelectionTimeoutMS=5000  # 5 seconds
+            serverSelectionTimeoutMS=5000
         )
-        # Verify connection
         client = mongoengine.get_connection("default")
         client.admin.command('ping')
         print("SUCCESSFULLY CONNECTED TO MONGO")

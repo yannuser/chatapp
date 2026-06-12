@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getConversations } from '../../api/conversations'
@@ -16,9 +16,21 @@ export default function Sidebar() {
   const [fab, setFab] = useState(false)
   const [showNewDm, setShowNewDm] = useState(false)
   const [showNewGroup, setShowNewGroup] = useState(false)
+  const fabRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const { activeConversationId, activeGroupId, lastMessages, setActiveConversation, setActiveGroup, clearUnread } = useChatStore()
+  const { activeConversationId, activeGroupId, lastMessages } = useChatStore()
+
+  useEffect(() => {
+    if (!fab) return
+    const handler = (e: MouseEvent) => {
+      if (fabRef.current && !fabRef.current.contains(e.target as Node)) {
+        setFab(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [fab])
 
   const { data: convos, isLoading: loadingConvos } = useQuery({
     queryKey: ['conversations'],
@@ -32,23 +44,25 @@ export default function Sidebar() {
   const items = useMemo(() => {
     const dmItems = (convos ?? []).map((c) => {
       const other = c.members.find((m) => m.id !== user?.id) ?? c.members[0]
-      const last = lastMessages[c.id]
+      const live = lastMessages[c.id]
+      const liveMsg = live?.kind === 'dm' ? live.msg : undefined
       return {
         id: c.id,
         name: `${other.first_name} ${other.last_name}`,
-        lastMessage: last?.kind === 'dm' ? last.msg.content : undefined,
-        timestamp: c.updated_at ?? c.created_at,
+        lastMessage: liveMsg?.content ?? c.last_message?.content,
+        timestamp: liveMsg?.sent_at ?? c.last_message?.sent_at ?? c.updated_at ?? c.created_at,
         isGroup: false as const,
         contactId: other.id,
       }
     })
     const groupItems = (groups ?? []).map((g) => {
-      const last = lastMessages[g.id]
+      const live = lastMessages[g.id]
+      const liveMsg = live?.kind === 'group' ? live.msg : undefined
       return {
         id: g.id,
         name: g.title,
-        lastMessage: last?.kind === 'group' ? last.msg.content : undefined,
-        timestamp: g.updated_at ?? g.created_at,
+        lastMessage: liveMsg?.content ?? g.last_message?.content,
+        timestamp: liveMsg?.sent_at ?? g.last_message?.sent_at ?? g.updated_at ?? g.created_at,
         isGroup: true as const,
         contactId: g.id,
       }
@@ -65,7 +79,6 @@ export default function Sidebar() {
       className="w-[360px] flex-shrink-0 flex flex-col h-full bg-secondary border-r border-default"
       style={{ borderColor: 'var(--border)' }}
     >
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-default">
         <Avatar name={user ? `${user.first_name} ${user.last_name}` : '?'} size="md" />
         <span className="font-semibold text-primary text-base flex-1 truncate">
@@ -73,7 +86,6 @@ export default function Sidebar() {
         </span>
       </div>
 
-      {/* Search */}
       <div className="px-3 py-2 border-b border-default">
         <div className="relative">
           <input
@@ -94,7 +106,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Conversation list */}
       <div className="flex-1 overflow-y-auto relative">
         {loading && [...Array(6)].map((_, i) => <ConversationSkeleton key={i} />)}
         {!loading && items.length === 0 && (
@@ -103,27 +114,20 @@ export default function Sidebar() {
         {!loading && items.map((item) => (
           <ConversationItem
             key={item.id}
-            id={item.isGroup ? item.id : item.contactId}
+            unreadId={item.id}
+            presenceUserId={item.isGroup ? undefined : item.contactId}
             name={item.name}
             lastMessage={item.lastMessage}
             timestamp={item.timestamp}
             isGroup={item.isGroup}
             isActive={item.isGroup ? activeGroupId === item.id : activeConversationId === item.id}
-            onClick={() => {
-              clearUnread(item.id)
-              if (item.isGroup) {
-                setActiveGroup(item.id)
-                navigate(`/groups/${item.id}`)
-              } else {
-                setActiveConversation(item.id)
-                navigate(`/conversations/${item.id}`)
-              }
-            }}
+            onClick={() =>
+              navigate(item.isGroup ? `/groups/${item.id}` : `/conversations/${item.id}`)
+            }
           />
         ))}
 
-        {/* FAB */}
-        <div className="absolute bottom-4 right-4">
+        <div ref={fabRef} className="absolute bottom-4 right-4">
           {fab && (
             <div className="absolute bottom-12 right-0 bg-secondary rounded-xl app-shadow border border-default overflow-hidden text-sm">
               <button
@@ -151,7 +155,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="px-4 py-3 border-t border-default flex items-center justify-end">
         <button
           onClick={() => navigate('/settings')}

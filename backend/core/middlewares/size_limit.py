@@ -40,7 +40,6 @@ class RequestSizeLimiterMiddleware:
                         status_code=413
                     )
                     await response(scope, receive, send)
-                    # Raise to break out of the app's receive loop
                     raise RuntimeError("Request body exceeded size limit")
 
             return message

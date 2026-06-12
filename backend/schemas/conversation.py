@@ -10,12 +10,21 @@ class ConversationCreate(BaseModel):
     updated_at : Optional[datetime] = None
 
 
+class LastMessagePreview(BaseModel):
+    """Slim message summary for list views (sidebar previews)."""
+    id: str
+    content: str
+    sender_id: str
+    sent_at: datetime
+
+
 class ConversationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     members : List[UserResponse]
     created_at : datetime
     updated_at : Optional[datetime] = None
+    last_message : Optional[LastMessagePreview] = None
 
     @field_validator("id", mode="before")
     @classmethod

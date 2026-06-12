@@ -1,12 +1,15 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getConversation } from '../../api/conversations'
 import { getGroup } from '../../api/groups'
 import { sendMessage } from '../../api/messages'
 import { sendGroupMessage } from '../../api/groupMessages'
 import { useAuthStore } from '../../stores/authStore'
+import { useChatStore } from '../../stores/chatStore'
 import { useToastStore } from '../../stores/toastStore'
-import { useWs } from '../../contexts/WebSocketContext'
+import { useWs } from '../../hooks/useWs'
+import { appendMessage } from '../../lib/messageCache'
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
@@ -20,6 +23,19 @@ export default function ChatPanel({ type }: Props) {
   const me = useAuthStore((s) => s.user!)
   const { addToast } = useToastStore()
   const { send: wsSend } = useWs()
+  const qc = useQueryClient()
+  const { setActiveConversation, setActiveGroup, clearUnread, setLastMessage } = useChatStore()
+
+  useEffect(() => {
+    if (!id) return
+    if (type === 'dm') setActiveConversation(id)
+    else setActiveGroup(id)
+    clearUnread(id)
+    return () => {
+      if (type === 'dm') setActiveConversation(null)
+      else setActiveGroup(null)
+    }
+  }, [type, id, setActiveConversation, setActiveGroup, clearUnread])
 
   const { data: conversation } = useQuery({
     queryKey: ['conversation', id],
@@ -34,10 +50,18 @@ export default function ChatPanel({ type }: Props) {
 
   const sendDm = useMutation({
     mutationFn: (content: string) => sendMessage(id!, content, me.id),
+    onSuccess: (msg) => {
+      appendMessage(qc, ['messages', id], msg)
+      setLastMessage(id!, { kind: 'dm', msg })
+    },
     onError: () => addToast('Failed to send message'),
   })
   const sendGm = useMutation({
     mutationFn: (content: string) => sendGroupMessage(id!, content, me.id),
+    onSuccess: (msg) => {
+      appendMessage(qc, ['group-messages', id], msg)
+      setLastMessage(id!, { kind: 'group', msg })
+    },
     onError: () => addToast('Failed to send message'),
   })
 

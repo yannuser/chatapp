@@ -11,7 +11,6 @@ class RequestIdMiddleware:
             return
 
         request_id = str(uuid.uuid4())
-        # Store in scope so it's available to Request(scope) and other middlewares
         if "state" not in scope:
             scope["state"] = {}
         scope["state"]["request_id"] = request_id

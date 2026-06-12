@@ -1,4 +1,3 @@
-# app/routers/conversations.py
 from fastapi import APIRouter, Depends
 from typing import List
 from schemas.conversation import ConversationCreate, ConversationResponse

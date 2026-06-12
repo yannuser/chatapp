@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { logout } from '../api/auth'
+import { useAuthStore } from '../stores/authStore'
 import ProfileTab from '../components/settings/ProfileTab'
 import NotificationsTab from '../components/settings/NotificationsTab'
 import PrivacyTab from '../components/settings/PrivacyTab'
@@ -21,10 +23,20 @@ type Tab = typeof TABS[number]['id']
 export default function SettingsPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('profile')
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch {
+      // Server-side revocation failed
+    }
+    clearAuth()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="flex h-full bg-primary">
-      {/* Sidebar nav */}
       <aside className="w-56 flex-shrink-0 border-r border-default flex flex-col">
         <div className="flex items-center gap-2 px-4 py-4 border-b border-default">
           <button
@@ -53,9 +65,19 @@ export default function SettingsPage() {
             </button>
           ))}
         </nav>
+        <div className="p-2 border-t border-default">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-lg text-sm font-medium text-danger hover-bg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Log out
+          </button>
+        </div>
       </aside>
 
-      {/* Content */}
       <main className="flex-1 overflow-y-auto p-8">
         {tab === 'profile' && <ProfileTab />}
         {tab === 'notifications' && <NotificationsTab />}

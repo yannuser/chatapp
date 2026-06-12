@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { createUser } from '../api/users'
 import { login, getMe } from '../api/auth'
+import { apiErrorDetail } from '../lib/apiError'
 import { useAuthStore } from '../stores/authStore'
 import { useToastStore } from '../stores/toastStore'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { setAuth, setToken } = useAuthStore()
   const { addToast } = useToastStore()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -37,11 +38,12 @@ export default function RegisterPage() {
         password: form.password,
       })
       const { access_token } = await login(form.email.trim(), form.password)
+      setToken(access_token)
       const user = await getMe()
       setAuth(user, access_token)
       navigate('/', { replace: true })
-    } catch (err: any) {
-      addToast(err?.response?.data?.detail ?? 'Registration failed')
+    } catch (err) {
+      addToast(apiErrorDetail(err, 'Registration failed'))
     } finally {
       setLoading(false)
     }

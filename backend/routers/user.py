@@ -1,5 +1,5 @@
-# app/routers/users.py
-from fastapi import APIRouter, Request, Depends, HTTPException, status
+from typing import List
+from fastapi import APIRouter, Query, Request, Depends, HTTPException, status
 from core.ratelimit import limiter
 from core.security import get_current_user
 from schemas.user import UserCreate, UserUpdate, UserResponse
@@ -9,6 +9,7 @@ from services.user import (
     get_user_by_id,
     get_user_by_email,
     get_user_by_username,
+    search_users,
     delete_user,
 )
 
@@ -20,6 +21,14 @@ router = APIRouter()
 @limiter.limit("3 per minute")
 def create_user_endpoint(user: UserCreate, request: Request):
     return create_user(user)
+
+
+@router.get("/search", response_model=List[UserResponse])
+def search_users_endpoint(
+    q: str = Query(min_length=1, max_length=254),
+    current_user=Depends(get_current_user),
+):
+    return search_users(q, exclude_id=str(current_user.id))
 
 
 @router.get("/email/{email}", response_model=UserResponse)
