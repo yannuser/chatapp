@@ -135,6 +135,42 @@ async def update_group(group_id: str, data: GroupUpdate, user_id: str) -> Group:
         raise
 
 
+async def leave_group(group_id: str, user_id: str) -> None:
+    try:
+        group = Group.objects(id=group_id).first()  # type: ignore
+        if not group:
+            raise HTTPException(status_code=404, detail="Group not found")
+        if all(str(m.id) != user_id for m in group.members):
+            raise HTTPException(status_code=403, detail="You are not a member of this group")
+
+        remaining = [m for m in group.members if str(m.id) != user_id]
+
+        # Last member leaving deletes the group entirely.
+        if not remaining:
+            group.delete()
+            await manager.send_personal_message(user_id, {"type": "group_deleted", "group_id": group_id})
+            return
+
+        # If the creator leaves, hand ownership to the next remaining member.
+        if str(group.creator.id) == user_id:
+            group.creator = remaining[0]
+        group.members = remaining
+        group.save()
+        group.reload()
+
+        payload = GroupResponse.model_validate(group).model_dump(mode="json")
+        payload["type"] = "group_updated"
+        for member in remaining:
+            await manager.send_personal_message(str(member.id), payload)
+
+        await manager.send_personal_message(user_id, {"type": "removed_from_group", "group_id": group_id})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"LEAVE GROUP ERROR: {str(e)}", exc_info=True)
+        raise
+
+
 async def delete_group(group_id: str, user_id: str) -> None:
     try:
         group = Group.objects(id=group_id).first()  # type: ignore

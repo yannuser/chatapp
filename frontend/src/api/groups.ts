@@ -20,3 +20,5 @@ export const updateGroup = (
 ) => api.put<GroupResponse>(`/groups/${id}`, data).then((r) => r.data)
 
 export const deleteGroup = (id: string) => api.delete(`/groups/${id}`)
+
+export const leaveGroup = (id: string) => api.post(`/groups/${id}/leave`)

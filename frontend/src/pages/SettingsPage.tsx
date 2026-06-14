@@ -8,9 +8,11 @@ import PrivacyTab from '../components/settings/PrivacyTab'
 import AppearanceTab from '../components/settings/AppearanceTab'
 import BlockedUsersTab from '../components/settings/BlockedUsersTab'
 import MutedTab from '../components/settings/MutedTab'
+import ContactsTab from '../components/settings/ContactsTab'
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
+  { id: 'contacts', label: 'Contacts' },
   { id: 'notifications', label: 'Notifications' },
   { id: 'privacy', label: 'Privacy' },
   { id: 'appearance', label: 'Appearance' },
@@ -80,6 +82,7 @@ export default function SettingsPage() {
 
       <main className="flex-1 overflow-y-auto p-8">
         {tab === 'profile' && <ProfileTab />}
+        {tab === 'contacts' && <ContactsTab />}
         {tab === 'notifications' && <NotificationsTab />}
         {tab === 'privacy' && <PrivacyTab />}
         {tab === 'appearance' && <AppearanceTab />}

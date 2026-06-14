@@ -20,6 +20,24 @@ export default function AppShell() {
     }
   }, [settings?.appearance?.theme, setTheme])
 
+  // Browsers only show the notification prompt in response to a user gesture,
+  // so ask on the first interaction (unless notifications are turned off).
+  useEffect(() => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return
+    if (settings && !settings.notifications.enabled) return
+    const ask = () => {
+      window.removeEventListener('pointerdown', ask)
+      window.removeEventListener('keydown', ask)
+      Notification.requestPermission().catch(() => {})
+    }
+    window.addEventListener('pointerdown', ask)
+    window.addEventListener('keydown', ask)
+    return () => {
+      window.removeEventListener('pointerdown', ask)
+      window.removeEventListener('keydown', ask)
+    }
+  }, [settings])
+
   return (
     <WebSocketProvider>
       <div className="flex h-screen overflow-hidden bg-primary">

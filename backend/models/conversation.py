@@ -1,4 +1,4 @@
-from mongoengine import CASCADE, PULL, Document, ListField, ReferenceField, StringField, DateTimeField, ValidationError
+from mongoengine import CASCADE, PULL, Document, ListField, MapField, ReferenceField, StringField, DateTimeField, ValidationError
 import models.direct_message as direct_message
 import models.user as User
 from datetime import datetime, timezone
@@ -18,6 +18,8 @@ class Conversation(Document):
     members = SizedListField(ReferenceField("User", reverse_delete_rule=CASCADE), max_length=2)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc), required=True)
     updated_at = DateTimeField(required=False)
+    # Maps a member's user id -> the time they last read this conversation.
+    last_read = MapField(DateTimeField())
 
     def clean(self):
         if not self.created_at:

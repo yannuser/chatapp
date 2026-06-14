@@ -5,6 +5,7 @@ import { getMessages, editMessage, deleteMessage } from '../../api/messages'
 import { getGroupMessages, editGroupMessage, deleteGroupMessage } from '../../api/groupMessages'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
+import { useReadStore } from '../../stores/readStore'
 import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 import { MessageSkeleton } from '../ui/Skeleton'
@@ -23,6 +24,8 @@ type AnyMessage = DirectMessageResponse | GroupMessageResponse
 export default function MessageList({ roomId, type, members }: Props) {
   const me = useAuthStore((s) => s.user!)
   const { addToast } = useToastStore()
+  const seedRead = useReadStore((s) => s.seed)
+  const reads = useReadStore((s) => s.reads[roomId])
   const containerRef = useRef<HTMLDivElement>(null)
   const atBottomRef = useRef(true)
   const prevScrollHeight = useRef(0)
@@ -78,6 +81,18 @@ export default function MessageList({ roomId, type, members }: Props) {
     if (!el || !atBottomRef.current) return
     el.scrollTop = el.scrollHeight
   }, [lastMsg?.id])
+
+  // Seed read receipts from the loaded page (DMs only).
+  useEffect(() => {
+    if (type !== 'dm' || !data) return
+    const page = data.pages[0]
+    if (page && 'last_read' in page && page.last_read) seedRead(roomId, page.last_read)
+  }, [type, roomId, data, seedRead])
+
+  const lastIsMine = !!lastMsg && 'sender' in lastMsg && lastMsg.sender.id === me.id
+  const otherId = type === 'dm' ? members.find((m) => m.id !== me.id)?.id : undefined
+  const otherReadAt = otherId ? reads?.[otherId] : undefined
+  const lastSeen = !!(lastIsMine && lastMsg && otherReadAt && new Date(otherReadAt) >= new Date(lastMsg.sent_at))
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current
@@ -147,6 +162,9 @@ export default function MessageList({ roomId, type, members }: Props) {
           />
         )
       })}
+      {lastSeen && (
+        <div className="text-right text-[11px] text-secondary pr-1 mt-0.5">Read</div>
+      )}
       <TypingIndicator roomId={roomId} memberNames={memberNames} />
     </div>
   )

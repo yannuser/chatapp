@@ -36,6 +36,8 @@ export interface DirectMessageResponse {
 export interface DirectMessagePage {
   messages: DirectMessageResponse[]
   next_cursor: string | null
+  /** Other members' last-read timestamps (privacy-gated), for read receipts. */
+  last_read?: Record<string, string> | null
 }
 
 export interface GroupResponse {
@@ -111,6 +113,7 @@ export type WsEvent =
   | ({ type: 'new_group_message' } & GroupMessageResponse)
   | ({ type: 'updated_group_message' } & GroupMessageResponse)
   | { type: 'deleted_group_message'; id: string; group_id: string }
+  | { type: 'read_receipt'; conversation_id: string; user_id: string; read_at: string }
   | { type: 'typing'; conversation_id: string; user_id: string; is_typing: boolean }
   | { type: 'typing_group'; group_id: string; user_id: string; is_typing: boolean }
   | { type: 'user_online'; user_id: string }

@@ -7,10 +7,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+.pnp
+.pnp.*
+
+# Build output
 dist
 dist-ssr
 *.local
+
+# Environment variables (Vite). Commit a non-secret .env.example instead.
+.env
+.env.*
+!.env.example
+
+# TypeScript incremental build info (produced by `tsc -b`)
+*.tsbuildinfo
+
+# Test coverage
+coverage
+*.lcov
 
 # Editor directories and files
 .vscode/*

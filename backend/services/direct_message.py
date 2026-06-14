@@ -10,6 +10,25 @@ import logging
 logger = logging.getLogger("direct_message_service")
 
 
+def read_status_for(conversation, viewer_id: str) -> dict:
+    """Other members' last-read timestamps, omitting anyone who disabled read receipts."""
+    from models.settings import Settings
+    out: dict[str, datetime] = {}
+    last_read = getattr(conversation, "last_read", None) or {}
+    for member in conversation.members:
+        mid = str(member.id)
+        if mid == viewer_id:
+            continue
+        ts = last_read.get(mid)
+        if not ts:
+            continue
+        s = Settings.objects(user=mid).first()  # type: ignore
+        if s and not s.privacy.read_receipts:
+            continue
+        out[mid] = ts
+    return out
+
+
 def get_conversation_messages(conversation_id: str, user_id: str, before: datetime | None, limit: int) -> dict:
     try:
         conversation = Conversation.objects(id=conversation_id).first()  # type: ignore
@@ -31,7 +50,7 @@ def get_conversation_messages(conversation_id: str, user_id: str, before: dateti
 
         next_cursor = msgs[-1].sent_at.isoformat() if has_more else None
         msgs.reverse()
-        return {"messages": msgs, "next_cursor": next_cursor}
+        return {"messages": msgs, "next_cursor": next_cursor, "last_read": read_status_for(conversation, user_id)}
     except HTTPException:
         raise
     except Exception as e:

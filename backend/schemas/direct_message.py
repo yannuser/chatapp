@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from schemas.conversation import ConversationResponse
 from schemas.user import UserResponse
 from datetime import datetime, timezone
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Dict
 
 
 class DirectMessageSave(BaseModel):
@@ -38,3 +38,5 @@ class DirectMessageResponse(BaseModel):
 class DirectMessagePage(BaseModel):
     messages: List[DirectMessageResponse]
     next_cursor: Optional[str] = None
+    # Other members' last-read timestamps (privacy-gated), for read receipts.
+    last_read: Optional[Dict[str, datetime]] = None

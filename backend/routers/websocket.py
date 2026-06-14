@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timezone
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from core.websocket import manager
 from core.security import get_current_user_ws
@@ -60,6 +61,38 @@ async def _handle_typing_group(user_id: str, data: dict):
             await manager.send_personal_message(mid, payload)
 
 
+async def _handle_read_dm(user_id: str, data: dict):
+    from models.conversation import Conversation
+    from models.settings import Settings
+    conversation_id = data.get("conversation_id")
+    if not conversation_id:
+        return
+    conversation = Conversation.objects(id=conversation_id).first()  # type: ignore
+    if not conversation:
+        return
+    if all(str(m.id) != user_id for m in conversation.members):
+        return
+
+    now = datetime.now(timezone.utc)
+    conversation.update(**{f"set__last_read__{user_id}": now})
+
+    # Respect the reader's privacy setting: don't reveal their read state if disabled.
+    s = Settings.objects(user=user_id).first()  # type: ignore
+    if s and not s.privacy.read_receipts:
+        return
+
+    payload = {
+        "type": "read_receipt",
+        "conversation_id": conversation_id,
+        "user_id": user_id,
+        "read_at": now.isoformat(),
+    }
+    for member in conversation.members:
+        mid = str(member.id)
+        if mid != user_id:
+            await manager.send_personal_message(mid, payload)
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -104,6 +137,8 @@ async def websocket_endpoint(
                 await _handle_typing_dm(user_id, data)
             elif event_type == "typing_group":
                 await _handle_typing_group(user_id, data)
+            elif event_type == "read":
+                await _handle_read_dm(user_id, data)
 
     except WebSocketDisconnect:
         manager.disconnect(user_id, websocket)

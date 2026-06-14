@@ -25,6 +25,7 @@ export default function ChatPanel({ type }: Props) {
   const { send: wsSend } = useWs()
   const qc = useQueryClient()
   const { setActiveConversation, setActiveGroup, clearUnread, setLastMessage } = useChatStore()
+  const lastMessage = useChatStore((s) => (id ? s.lastMessages[id] : undefined))
 
   useEffect(() => {
     if (!id) return
@@ -36,6 +37,11 @@ export default function ChatPanel({ type }: Props) {
       else setActiveGroup(null)
     }
   }, [type, id, setActiveConversation, setActiveGroup, clearUnread])
+
+  // Mark a DM as read on open and whenever a new message lands while it's open.
+  useEffect(() => {
+    if (type === 'dm' && id) wsSend({ type: 'read', conversation_id: id })
+  }, [type, id, lastMessage, wsSend])
 
   const { data: conversation } = useQuery({
     queryKey: ['conversation', id],
@@ -89,7 +95,7 @@ export default function ChatPanel({ type }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      {type === 'dm' && otherUser && <ChatHeader type="dm" user={otherUser} />}
+      {type === 'dm' && otherUser && <ChatHeader type="dm" user={otherUser} conversationId={id} />}
       {type === 'group' && group && <ChatHeader type="group" group={group} />}
       <MessageList roomId={id} type={type} members={members} />
       <MessageInput onSend={handleSend} onTyping={handleTyping} />

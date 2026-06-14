@@ -1,16 +1,20 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { differenceInYears, parseISO } from 'date-fns'
-import { updateUser } from '../../api/users'
+import { updateUser, deleteUser } from '../../api/users'
 import { apiErrorDetail } from '../../lib/apiError'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
 import Avatar from '../ui/Avatar'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 export default function ProfileTab() {
-  const { user, setAuth, accessToken } = useAuthStore()
+  const navigate = useNavigate()
+  const { user, setAuth, accessToken, clearAuth } = useAuthStore()
   const { addToast } = useToastStore()
   const [editing, setEditing] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [form, setForm] = useState({
     first_name: user?.first_name ?? '',
     last_name: user?.last_name ?? '',
@@ -33,6 +37,12 @@ export default function ProfileTab() {
     mutationFn: () => updateUser(user!.id, { password: pwForm.password }),
     onSuccess: () => { setPwForm({ password: '', confirm: '' }); addToast('Password changed', 'success') },
     onError: (e) => addToast(apiErrorDetail(e, 'Password change failed')),
+  })
+
+  const deleteAccount = useMutation({
+    mutationFn: () => deleteUser(user!.id),
+    onSuccess: () => { clearAuth(); navigate('/login', { replace: true }) },
+    onError: (e) => addToast(apiErrorDetail(e, 'Could not delete account')),
   })
 
   const age = user?.birthdate ? differenceInYears(new Date(), parseISO(user.birthdate)) : null
@@ -114,6 +124,29 @@ export default function ProfileTab() {
           Update password
         </button>
       </div>
+
+      <div className="border-t border-default pt-4">
+        <p className="font-medium text-danger text-sm mb-1">Danger zone</p>
+        <p className="text-secondary text-xs mb-3">Permanently delete your account and all of your data.</p>
+        <button
+          onClick={() => setConfirmDelete(true)}
+          className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg font-medium hover:bg-red-600 transition-colors"
+        >
+          Delete account
+        </button>
+      </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete account"
+          message="This permanently deletes your account, messages, and settings. This cannot be undone."
+          confirmLabel="Delete account"
+          danger
+          loading={deleteAccount.isPending}
+          onConfirm={() => deleteAccount.mutate()}
+          onClose={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   )
 }

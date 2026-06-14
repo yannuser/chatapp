@@ -4,8 +4,10 @@ import { useAuthStore } from '../stores/authStore'
 import { useChatStore } from '../stores/chatStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useTypingStore } from '../stores/typingStore'
+import { useReadStore } from '../stores/readStore'
 import { appendMessage } from '../lib/messageCache'
-import type { WsEvent, DirectMessageResponse, GroupMessageResponse } from '../types/api'
+import { showBrowserNotification } from '../lib/notify'
+import type { WsEvent, DirectMessageResponse, GroupMessageResponse, SettingsResponse } from '../types/api'
 
 const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/ws`
 const MAX_RETRIES = 5
@@ -16,10 +18,15 @@ export function useWebSocket() {
   const retriesRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const connectRef = useRef<() => void>(() => {})
-  const { accessToken } = useAuthStore()
+  const closingRef = useRef(false)
+  // The socket authenticates via the access_token cookie, so it only depends on
+  // login status — not the rotating JS token (which would churn the connection).
+  const status = useAuthStore((s) => s.status)
+  const user = useAuthStore((s) => s.user)
   const { activeConversationId, activeGroupId, incrementUnread, setLastMessage } = useChatStore()
   const { setOnline, setManyOnline, setOffline } = usePresenceStore()
   const { setTyping } = useTypingStore()
+  const setRead = useReadStore((s) => s.setRead)
 
   const activeConvRef = useRef(activeConversationId)
   const activeGroupRef = useRef(activeGroupId)
@@ -33,7 +40,19 @@ export function useWebSocket() {
         appendMessage(qc, ['messages', convId], evt)
         setLastMessage(convId, { kind: 'dm', msg: evt })
         qc.invalidateQueries({ queryKey: ['conversations'] })
-        if (activeConvRef.current !== convId) incrementUnread(convId)
+        const settings = qc.getQueryData<SettingsResponse>(['settings'])
+        const muted = settings?.muted_conversations.includes(convId)
+        if (activeConvRef.current !== convId && !muted) incrementUnread(convId)
+        if (
+          (document.hidden || activeConvRef.current !== convId) &&
+          evt.sender.id !== user?.id && !muted && settings?.notifications.enabled
+        ) {
+          showBrowserNotification(
+            `${evt.sender.first_name} ${evt.sender.last_name}`,
+            settings.notifications.message_preview ? evt.content : 'New message',
+            { tag: convId, dedupeKey: evt.id },
+          )
+        }
         break
       }
       case 'updated_direct_message': {
@@ -70,7 +89,22 @@ export function useWebSocket() {
         appendMessage(qc, ['group-messages', groupId], evt)
         setLastMessage(groupId, { kind: 'group', msg: evt })
         qc.invalidateQueries({ queryKey: ['groups'] })
-        if (activeGroupRef.current !== groupId) incrementUnread(groupId)
+        const gSettings = qc.getQueryData<SettingsResponse>(['settings'])
+        const mutedGroup = gSettings?.muted_groups.includes(groupId)
+        if (activeGroupRef.current !== groupId && !mutedGroup) incrementUnread(groupId)
+        if (
+          (document.hidden || activeGroupRef.current !== groupId) &&
+          evt.sender.id !== user?.id && !mutedGroup &&
+          gSettings?.notifications.enabled && gSettings?.notifications.group_messages
+        ) {
+          showBrowserNotification(
+            evt.group.title,
+            gSettings.notifications.message_preview
+              ? `${evt.sender.first_name}: ${evt.content}`
+              : 'New message',
+            { tag: groupId, dedupeKey: evt.id },
+          )
+        }
         break
       }
       case 'updated_group_message': {
@@ -102,6 +136,9 @@ export function useWebSocket() {
         )
         break
       }
+      case 'read_receipt':
+        setRead(evt.conversation_id, evt.user_id, evt.read_at)
+        break
       case 'typing':
         setTyping(evt.conversation_id, evt.user_id, evt.is_typing)
         break
@@ -124,10 +161,16 @@ export function useWebSocket() {
         qc.invalidateQueries({ queryKey: ['groups'] })
         break
     }
-  }, [qc, incrementUnread, setLastMessage, setOnline, setManyOnline, setOffline, setTyping])
+  }, [qc, user, incrementUnread, setLastMessage, setRead, setOnline, setManyOnline, setOffline, setTyping])
+
+  // Keep the socket's message handler current without recreating the socket.
+  const handleEventRef = useRef(handleEvent)
+  useEffect(() => { handleEventRef.current = handleEvent }, [handleEvent])
 
   const connect = useCallback(() => {
-    if (!accessToken) return
+    // Never open a second socket alongside a live/connecting one.
+    const current = wsRef.current
+    if (current && (current.readyState === WebSocket.OPEN || current.readyState === WebSocket.CONNECTING)) return
     const ws = new WebSocket(WS_URL)
     wsRef.current = ws
 
@@ -135,15 +178,17 @@ export function useWebSocket() {
 
     ws.onmessage = (e) => {
       try {
-        const evt = JSON.parse(e.data) as WsEvent
-        handleEvent(evt)
+        handleEventRef.current(JSON.parse(e.data) as WsEvent)
       } catch {
         // Ignore malformed frames
       }
     }
 
     ws.onclose = () => {
+      // A stale socket (already replaced, e.g. StrictMode remount) must not reconnect.
+      if (wsRef.current !== ws) return
       wsRef.current = null
+      if (closingRef.current) return
       if (retriesRef.current < MAX_RETRIES) {
         const delay = Math.min(1000 * 2 ** retriesRef.current, 30000)
         retriesRef.current++
@@ -152,18 +197,22 @@ export function useWebSocket() {
     }
 
     ws.onerror = () => ws.close()
-  }, [accessToken, handleEvent])
+  }, [])
 
   useEffect(() => { connectRef.current = connect }, [connect])
 
   useEffect(() => {
-    if (!accessToken) return
+    if (status !== 'authenticated') return
+    closingRef.current = false
     connect()
     return () => {
+      closingRef.current = true
       if (timerRef.current) clearTimeout(timerRef.current)
-      wsRef.current?.close()
+      const ws = wsRef.current
+      wsRef.current = null
+      if (ws) ws.close()
     }
-  }, [accessToken, connect])
+  }, [status, connect])
 
   const send = useCallback((payload: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
