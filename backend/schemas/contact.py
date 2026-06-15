@@ -22,3 +22,10 @@ class ContactResponse(BaseModel):
     contacts: List[UserResponse]
     created_at: datetime
     updated_at: datetime
+
+
+class ContactPage(BaseModel):
+    contacts: List[UserResponse]
+    total: int
+    offset: int
+    limit: int

@@ -35,7 +35,7 @@ export default function ContactsTab() {
   })
 
   const message = (userId: string) => {
-    const existing = convos?.find((c) => c.members.some((m) => m.id === userId))
+    const existing = convos?.conversations?.find((c) => c.members.some((m) => m.id === userId))
     if (existing) {
       navigate(`/conversations/${existing.id}`)
       return
@@ -45,8 +45,8 @@ export default function ContactsTab() {
 
   const add = useMutation({
     mutationFn: (id: string) => addContact(id),
-    onSuccess: (updated) => {
-      qc.setQueryData(['contacts'], updated)
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contacts'] })
       addToast('Contact added', 'success')
     },
     onError: (e) => addToast(apiErrorDetail(e, 'Could not add contact')),
@@ -54,8 +54,8 @@ export default function ContactsTab() {
 
   const remove = useMutation({
     mutationFn: (id: string) => removeContact(id),
-    onSuccess: (updated) => {
-      qc.setQueryData(['contacts'], updated)
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contacts'] })
       addToast('Contact removed', 'success')
     },
     onError: (e) => addToast(apiErrorDetail(e, 'Could not remove contact')),
@@ -84,7 +84,10 @@ export default function ContactsTab() {
             ))}
           </div>
         ) : contacts.length === 0 ? (
-          <p className="text-secondary text-sm">No contacts yet</p>
+          <div className="py-6 text-center">
+            <p className="text-primary text-sm font-medium mb-1">No contacts yet</p>
+            <p className="text-secondary text-xs">Search for someone above to add them</p>
+          </div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
             {contacts.map((c) => (

@@ -2,7 +2,8 @@ import logging
 from fastapi import HTTPException
 from models.contact import Contact
 from models.user import User
-from schemas.contact import ContactCreate
+from schemas.contact import ContactCreate, ContactPage
+from schemas.user import UserResponse
 
 logger = logging.getLogger("contact_service")
 
@@ -45,10 +46,19 @@ def create_contact_list(data: ContactCreate) -> Contact:
         raise
 
 
-def get_contacts(user_id: str) -> Contact:
+def get_contacts(user_id: str, limit: int = 100, offset: int = 0) -> ContactPage:
     try:
         _get_user(user_id)
-        return _get_contact_list(user_id)
+        contact_list = _get_contact_list(user_id)
+        all_contacts = contact_list.contacts
+        total = len(all_contacts)
+        page = all_contacts[offset: offset + limit]
+        return ContactPage(
+            contacts=[UserResponse.model_validate(c) for c in page],
+            total=total,
+            offset=offset,
+            limit=limit,
+        )
     except HTTPException:
         raise
     except Exception as e:

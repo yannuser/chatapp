@@ -4,6 +4,7 @@ from schemas.user import UserResponse
 from schemas.conversation import LastMessagePreview
 from datetime import datetime, timezone
 
+
 class GroupCreate(BaseModel):
     title : str = Field(max_length=100)
     description : str | None  = Field(default=None, max_length=5000)
@@ -37,3 +38,8 @@ class GroupResponse(BaseModel):
         if isinstance(value, str):
             return value
         return str(value)
+
+
+class GroupPage(BaseModel):
+    groups: List[GroupResponse]
+    next_cursor: Optional[str] = None

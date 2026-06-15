@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from models.direct_message import DirectMessage
+from models.direct_message import DirectMessage, EditEntry as EditEntryDoc, Reaction as ReactionDoc
 from models.conversation import Conversation
 from models.user import User
 from schemas.direct_message import DirectMessageSave, DirectMessageUpdate, DirectMessageResponse
@@ -11,7 +11,6 @@ logger = logging.getLogger("direct_message_service")
 
 
 def read_status_for(conversation, viewer_id: str) -> dict:
-    """Other members' last-read timestamps, omitting anyone who disabled read receipts."""
     from models.settings import Settings
     out: dict[str, datetime] = {}
     last_read = getattr(conversation, "last_read", None) or {}
@@ -79,7 +78,16 @@ async def create_direct_message(data: DirectMessageSave) -> DirectMessage:
             if s and any(str(b.id) == data.sender_id for b in s.blocked_users):
                 raise HTTPException(status_code=403, detail="You cannot send messages to this user")
 
-        msg = DirectMessage(content=data.content, sender=sender, linked_conversation=conversation)
+        reply_msg = None
+        if data.reply_to_id:
+            reply_msg = DirectMessage.objects(id=data.reply_to_id, linked_conversation=conversation).first()  # type: ignore
+
+        msg = DirectMessage(
+            content=data.content,
+            sender=sender,
+            linked_conversation=conversation,
+            reply_to=reply_msg,
+        )
         msg.save()
 
         conversation.update(set__updated_at=msg.sent_at)
@@ -106,11 +114,15 @@ async def update_direct_message(msg_id: str, user_id: str, data: DirectMessageUp
         if str(msg.sender.id) != user_id:
             raise HTTPException(status_code=403, detail="You do not have the rights")
 
-        update_data = data.model_dump(exclude_none=True)
-        if not update_data:
-            return msg
+        if getattr(msg, "is_deleted", False):
+            raise HTTPException(status_code=400, detail="Cannot edit a deleted message")
 
-        msg.update(**update_data)
+        now = datetime.now(timezone.utc)
+        msg.update(
+            push__edits=EditEntryDoc(content=msg.content, edited_at=now),
+            set__content=data.content,
+            set__updated_at=now,
+        )
         msg.reload()
 
         payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
@@ -135,15 +147,70 @@ async def delete_direct_message(msg_id: str, user_id: str) -> None:
         if str(msg.sender.id) != user_id:
             raise HTTPException(status_code=403, detail="You do not have the rights to do that")
 
-        conversation_id = str(msg.linked_conversation.id)
-        members = list(msg.linked_conversation.members)
-        msg.delete()
+        if getattr(msg, "is_deleted", False):
+            return
 
-        payload = {"type": "deleted_direct_message", "id": msg_id, "conversation_id": conversation_id}
+        members = list(msg.linked_conversation.members)
+        now = datetime.now(timezone.utc)
+        msg.update(
+            set__is_deleted=True,
+            set__content="",
+            set__deleted_at=now,
+            set__updated_at=now,
+        )
+        msg.reload()
+
+        payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
+        payload["type"] = "deleted_direct_message"
         for member in members:
             await manager.send_personal_message(str(member.id), payload)
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"DELETE MESSAGE ERROR: {str(e)}", exc_info=True)
+        raise
+
+
+async def react_to_direct_message(msg_id: str, user_id: str, emoji: str) -> DirectMessage:
+    try:
+        msg = DirectMessage.objects(id=msg_id).first()  # type: ignore
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+
+        members = list(msg.linked_conversation.members)
+        if all(str(m.id) != user_id for m in members):
+            raise HTTPException(status_code=403, detail="You are not a member of this conversation")
+
+        reactions = [
+            {"emoji": r.emoji, "user_ids": list(r.user_ids or [])}
+            for r in (msg.reactions or [])
+        ]
+
+        idx = next((i for i, r in enumerate(reactions) if r["emoji"] == emoji), None)
+
+        if idx is None:
+            reactions.append({"emoji": emoji, "user_ids": [user_id]})
+        else:
+            users = reactions[idx]["user_ids"]
+            if user_id in users:
+                users.remove(user_id)
+            else:
+                users.append(user_id)
+            if not users:
+                reactions.pop(idx)
+
+        new_reactions = [ReactionDoc(emoji=r["emoji"], user_ids=r["user_ids"]) for r in reactions]
+        msg.update(set__reactions=new_reactions)
+        msg.reload()
+
+        payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
+        payload["type"] = "updated_direct_message"
+        for member in members:
+            await manager.send_personal_message(str(member.id), payload)
+
+        return msg
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"REACT MESSAGE ERROR: {str(e)}", exc_info=True)
         raise

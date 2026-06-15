@@ -19,8 +19,6 @@ export function useWebSocket() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const connectRef = useRef<() => void>(() => {})
   const closingRef = useRef(false)
-  // The socket authenticates via the access_token cookie, so it only depends on
-  // login status — not the rotating JS token (which would churn the connection).
   const status = useAuthStore((s) => s.status)
   const user = useAuthStore((s) => s.user)
   const { activeConversationId, activeGroupId, incrementUnread, setLastMessage } = useChatStore()
@@ -71,17 +69,20 @@ export function useWebSocket() {
         break
       }
       case 'deleted_direct_message': {
+        const convId = evt.linked_conversation.id
         qc.setQueryData<{ pages: { messages: DirectMessageResponse[]; next_cursor: string | null }[] }>(
-          ['messages', evt.conversation_id],
+          ['messages', convId],
           (old) => {
             if (!old) return old
             const pages = old.pages.map((p) => ({
               ...p,
-              messages: p.messages.filter((m) => m.id !== evt.id),
+              messages: p.messages.map((m) => (m.id === evt.id ? evt : m)),
             }))
             return { ...old, pages }
           }
         )
+        setLastMessage(convId, { kind: 'dm', msg: evt })
+        qc.invalidateQueries({ queryKey: ['conversations'] })
         break
       }
       case 'new_group_message': {
@@ -123,17 +124,20 @@ export function useWebSocket() {
         break
       }
       case 'deleted_group_message': {
+        const groupId = evt.group.id
         qc.setQueryData<{ pages: { messages: GroupMessageResponse[]; next_cursor: string | null }[] }>(
-          ['group-messages', evt.group_id],
+          ['group-messages', groupId],
           (old) => {
             if (!old) return old
             const pages = old.pages.map((p) => ({
               ...p,
-              messages: p.messages.filter((m) => m.id !== evt.id),
+              messages: p.messages.map((m) => (m.id === evt.id ? evt : m)),
             }))
             return { ...old, pages }
           }
         )
+        setLastMessage(groupId, { kind: 'group', msg: evt })
+        qc.invalidateQueries({ queryKey: ['groups'] })
         break
       }
       case 'read_receipt':
@@ -163,12 +167,10 @@ export function useWebSocket() {
     }
   }, [qc, user, incrementUnread, setLastMessage, setRead, setOnline, setManyOnline, setOffline, setTyping])
 
-  // Keep the socket's message handler current without recreating the socket.
   const handleEventRef = useRef(handleEvent)
   useEffect(() => { handleEventRef.current = handleEvent }, [handleEvent])
 
   const connect = useCallback(() => {
-    // Never open a second socket alongside a live/connecting one.
     const current = wsRef.current
     if (current && (current.readyState === WebSocket.OPEN || current.readyState === WebSocket.CONNECTING)) return
     const ws = new WebSocket(WS_URL)
@@ -180,12 +182,10 @@ export function useWebSocket() {
       try {
         handleEventRef.current(JSON.parse(e.data) as WsEvent)
       } catch {
-        // Ignore malformed frames
       }
     }
 
     ws.onclose = () => {
-      // A stale socket (already replaced, e.g. StrictMode remount) must not reconnect.
       if (wsRef.current !== ws) return
       wsRef.current = null
       if (closingRef.current) return

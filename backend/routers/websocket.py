@@ -17,6 +17,46 @@ def _get_contact_ids(user_id: str) -> list[str]:
     return [str(c.id) for c in contact_list.contacts]
 
 
+async def _replay_missed_events(user_id: str, since: datetime, websocket: WebSocket):
+    from models.conversation import Conversation
+    from models.direct_message import DirectMessage
+    from models.group import Group
+    from models.group_message import GroupMessage
+    from schemas.direct_message import DirectMessageResponse
+    from schemas.group_message import GroupMessageResponse
+
+    try:
+        convo_ids = [c.id for c in Conversation.objects(members=user_id)]  # type: ignore
+        if convo_ids:
+            missed_dms = (
+                DirectMessage.objects(linked_conversation__in=convo_ids, sent_at__gt=since)  # type: ignore
+                .order_by("sent_at")
+                .limit(200)
+            )
+            for msg in missed_dms:
+                if getattr(msg, "is_deleted", False):
+                    continue
+                payload = DirectMessageResponse.model_validate(msg).model_dump(mode="json")
+                payload["type"] = "new_direct_message"
+                await websocket.send_json(payload)
+
+        group_ids = [g.id for g in Group.objects(members=user_id)]  # type: ignore
+        if group_ids:
+            missed_group_msgs = (
+                GroupMessage.objects(group__in=group_ids, sent_at__gt=since)  # type: ignore
+                .order_by("sent_at")
+                .limit(200)
+            )
+            for msg in missed_group_msgs:
+                if getattr(msg, "is_deleted", False):
+                    continue
+                payload = GroupMessageResponse.model_validate(msg).model_dump(mode="json")
+                payload["type"] = "new_group_message"
+                await websocket.send_json(payload)
+    except Exception as e:
+        logger.error(f"REPLAY MISSED EVENTS ERROR user={user_id}: {e}", exc_info=True)
+
+
 async def _handle_typing_dm(user_id: str, data: dict):
     from models.conversation import Conversation
     conversation_id = data.get("conversation_id")
@@ -76,7 +116,6 @@ async def _handle_read_dm(user_id: str, data: dict):
     now = datetime.now(timezone.utc)
     conversation.update(**{f"set__last_read__{user_id}": now})
 
-    # Respect the reader's privacy setting: don't reveal their read state if disabled.
     s = Settings.objects(user=user_id).first()  # type: ignore
     if s and not s.privacy.read_receipts:
         return
@@ -123,6 +162,10 @@ async def websocket_endpoint(
             continue
         online_ids.append(cid)
     await websocket.send_json({"type": "online_contacts", "user_ids": online_ids})
+
+    last_disconnect = manager.pop_last_disconnect(user_id)
+    if last_disconnect:
+        await _replay_missed_events(user_id, last_disconnect, websocket)
 
     try:
         while True:

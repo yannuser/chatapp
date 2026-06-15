@@ -9,12 +9,10 @@ import {
 import { useToastStore } from '../stores/toastStore'
 import type { SettingsResponse } from '../types/api'
 
-/** Shared access to the current user's settings (cached under ['settings']). */
 export function useSettings() {
   return useQuery({ queryKey: ['settings'], queryFn: getSettings })
 }
 
-/** Mute/unmute helper reused by the sidebar and chat header. */
 export function useMute() {
   const qc = useQueryClient()
   const { addToast } = useToastStore()

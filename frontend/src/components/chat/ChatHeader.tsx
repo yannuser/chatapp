@@ -134,6 +134,15 @@ export default function ChatHeader(props: Props) {
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-secondary border-b border-default flex-shrink-0">
+      <button
+        onClick={() => navigate('/')}
+        className="md:hidden w-9 h-9 rounded-full hover-bg flex items-center justify-center text-secondary hover:text-primary transition-colors flex-shrink-0"
+        aria-label="Back"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
       <Avatar
         name={name}
         size="md"

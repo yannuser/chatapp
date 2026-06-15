@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 
 interface ReadState {
-  /** conversationId -> (userId -> ISO read timestamp) */
   reads: Record<string, Record<string, string>>
   setRead: (conversationId: string, userId: string, readAt: string) => void
   seed: (conversationId: string, map: Record<string, string>) => void

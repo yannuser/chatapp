@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
-from typing import List
-from schemas.conversation import ConversationCreate, ConversationResponse
+from fastapi import APIRouter, Depends, Query
+from typing import Optional
+from schemas.conversation import ConversationCreate, ConversationResponse, ConversationPage
 from services.conversation import create_conversation, get_conversation_by_id, delete_conversation, get_user_conversations
 from core.security import get_current_user
 
@@ -8,9 +8,13 @@ from core.security import get_current_user
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ConversationResponse])
-def get_user_conversations_endpoint(current_user=Depends(get_current_user)):
-    return get_user_conversations(str(current_user.id))
+@router.get("/", response_model=ConversationPage)
+def get_user_conversations_endpoint(
+    limit: int = Query(default=20, ge=1, le=100),
+    before_id: Optional[str] = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    return get_user_conversations(str(current_user.id), limit=limit, before_id=before_id)
 
 
 @router.post("/", response_model=ConversationResponse, status_code=201)

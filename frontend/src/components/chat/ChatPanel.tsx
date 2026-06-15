@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getConversation } from '../../api/conversations'
@@ -13,6 +13,7 @@ import { appendMessage } from '../../lib/messageCache'
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
+import type { ReplyPreview } from '../../types/api'
 
 interface Props {
   type: 'dm' | 'group'
@@ -26,6 +27,7 @@ export default function ChatPanel({ type }: Props) {
   const qc = useQueryClient()
   const { setActiveConversation, setActiveGroup, clearUnread, setLastMessage } = useChatStore()
   const lastMessage = useChatStore((s) => (id ? s.lastMessages[id] : undefined))
+  const [replyingTo, setReplyingTo] = useState<ReplyPreview | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -38,7 +40,10 @@ export default function ChatPanel({ type }: Props) {
     }
   }, [type, id, setActiveConversation, setActiveGroup, clearUnread])
 
-  // Mark a DM as read on open and whenever a new message lands while it's open.
+  useEffect(() => {
+    setReplyingTo(null)
+  }, [id])
+
   useEffect(() => {
     if (type === 'dm' && id) wsSend({ type: 'read', conversation_id: id })
   }, [type, id, lastMessage, wsSend])
@@ -55,15 +60,18 @@ export default function ChatPanel({ type }: Props) {
   })
 
   const sendDm = useMutation({
-    mutationFn: (content: string) => sendMessage(id!, content, me.id),
+    mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) =>
+      sendMessage(id!, content, me.id, replyToId),
     onSuccess: (msg) => {
       appendMessage(qc, ['messages', id], msg)
       setLastMessage(id!, { kind: 'dm', msg })
     },
     onError: () => addToast('Failed to send message'),
   })
+
   const sendGm = useMutation({
-    mutationFn: (content: string) => sendGroupMessage(id!, content, me.id),
+    mutationFn: ({ content, replyToId }: { content: string; replyToId?: string }) =>
+      sendGroupMessage(id!, content, me.id, replyToId),
     onSuccess: (msg) => {
       appendMessage(qc, ['group-messages', id], msg)
       setLastMessage(id!, { kind: 'group', msg })
@@ -72,8 +80,10 @@ export default function ChatPanel({ type }: Props) {
   })
 
   const handleSend = (content: string) => {
-    if (type === 'dm') sendDm.mutate(content)
-    else sendGm.mutate(content)
+    const replyToId = replyingTo?.id
+    if (type === 'dm') sendDm.mutate({ content, replyToId })
+    else sendGm.mutate({ content, replyToId })
+    setReplyingTo(null)
   }
 
   const handleTyping = (isTyping: boolean) => {
@@ -97,8 +107,18 @@ export default function ChatPanel({ type }: Props) {
     <div className="flex flex-col h-full">
       {type === 'dm' && otherUser && <ChatHeader type="dm" user={otherUser} conversationId={id} />}
       {type === 'group' && group && <ChatHeader type="group" group={group} />}
-      <MessageList roomId={id} type={type} members={members} />
-      <MessageInput onSend={handleSend} onTyping={handleTyping} />
+      <MessageList
+        roomId={id}
+        type={type}
+        members={members}
+        onReply={setReplyingTo}
+      />
+      <MessageInput
+        onSend={handleSend}
+        onTyping={handleTyping}
+        replyingTo={replyingTo}
+        onCancelReply={() => setReplyingTo(null)}
+      />
     </div>
   )
 }

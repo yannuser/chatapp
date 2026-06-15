@@ -1,17 +1,22 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 from core.security import get_current_user
 from core.ratelimit import limiter
-from schemas.group_message import GroupMessageCreate, GroupMessageUpdate, GroupMessageResponse, GroupMessagePage
+from schemas.group_message import (
+    GroupMessageCreate, GroupMessageUpdate, GroupMessageResponse,
+    GroupMessagePage, ReactRequest,
+)
 from services.group_message import (
     get_group_messages,
     create_group_message,
     update_group_message,
     delete_group_message,
+    react_to_group_message,
 )
 
 router = APIRouter()
+
 
 @router.get("/", response_model=GroupMessagePage)
 def get_group_messages_endpoint(
@@ -22,15 +27,25 @@ def get_group_messages_endpoint(
 ):
     return get_group_messages(group_id, str(current_user.id), before, limit)
 
+
 @router.post("/", response_model=GroupMessageResponse, status_code=201)
 @limiter.limit("30 per minute")
 async def create_group_message_endpoint(msg: GroupMessageCreate, request: Request, current_user=Depends(get_current_user)):
     msg.sender_id = str(current_user.id)
     return await create_group_message(msg)
 
+
+@router.post("/{msg_id}/react", response_model=GroupMessageResponse)
+async def react_to_group_message_endpoint(
+    msg_id: str, body: ReactRequest, current_user=Depends(get_current_user)
+):
+    return await react_to_group_message(msg_id, str(current_user.id), body.emoji)
+
+
 @router.put("/{msg_id}", response_model=GroupMessageResponse)
 async def update_group_message_endpoint(msg_id: str, msg_update: GroupMessageUpdate, current_user=Depends(get_current_user)):
     return await update_group_message(msg_id, str(current_user.id), msg_update)
+
 
 @router.delete("/{msg_id}", status_code=204)
 async def delete_group_message_endpoint(msg_id: str, current_user=Depends(get_current_user)):

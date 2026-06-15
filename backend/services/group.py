@@ -1,7 +1,8 @@
 import logging
+from bson import ObjectId
 from models.group import Group
 from models.user import User
-from schemas.group import GroupCreate, GroupUpdate, GroupResponse
+from schemas.group import GroupCreate, GroupUpdate, GroupResponse, GroupPage
 from schemas.conversation import LastMessagePreview
 from fastapi import HTTPException
 from core.websocket import manager
@@ -9,11 +10,23 @@ from core.websocket import manager
 logger = logging.getLogger("group_service")
 
 
-def get_user_groups(user_id: str) -> list[GroupResponse]:
+def get_user_groups(user_id: str, limit: int = 20, before_id: str | None = None) -> GroupPage:
     try:
         from models.group_message import GroupMessage
+
+        query = Group.objects(members=user_id)  # type: ignore
+        if before_id:
+            query = query.filter(id__lt=ObjectId(before_id))
+
+        items = list(query.order_by("-id").limit(limit + 1))
+        has_more = len(items) > limit
+        if has_more:
+            items = items[:limit]
+
+        next_cursor = str(items[-1].id) if has_more else None
+
         out = []
-        for group in Group.objects(members=user_id):  # type: ignore
+        for group in items:
             resp = GroupResponse.model_validate(group)
             last = GroupMessage.objects(group=group.id).order_by("-sent_at").first()  # type: ignore
             if last:
@@ -22,9 +35,11 @@ def get_user_groups(user_id: str) -> list[GroupResponse]:
                     content=last.content,
                     sender_id=str(last.sender.id),
                     sent_at=last.sent_at,
+                    is_deleted=getattr(last, "is_deleted", False),
                 )
             out.append(resp)
-        return out
+
+        return GroupPage(groups=out, next_cursor=next_cursor)
     except Exception as e:
         logger.error(f"GET USER GROUPS ERROR: {str(e)}", exc_info=True)
         raise
@@ -145,13 +160,11 @@ async def leave_group(group_id: str, user_id: str) -> None:
 
         remaining = [m for m in group.members if str(m.id) != user_id]
 
-        # Last member leaving deletes the group entirely.
         if not remaining:
             group.delete()
             await manager.send_personal_message(user_id, {"type": "group_deleted", "group_id": group_id})
             return
 
-        # If the creator leaves, hand ownership to the next remaining member.
         if str(group.creator.id) == user_id:
             group.creator = remaining[0]
         group.members = remaining

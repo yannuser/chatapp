@@ -25,6 +25,17 @@ class Settings(BaseSettings):
     MAX_LOGIN_ATTEMPTS: int = 5
     LOCKOUT_DURATION_MINUTES: int = 15
 
+    SMTP_ENABLED: bool = False
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_FROM_NAME: str = "ChatApp"
+
+    FRONTEND_URL: str = "http://localhost:5173"
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 15
+
     ALLOWED_HOSTS: list[str] = ["*"]
     ALLOWED_ORIGINS: list[str] = ["*"]
 

@@ -1,8 +1,8 @@
 import api from './client'
-import type { GroupResponse } from '../types/api'
+import type { GroupResponse, GroupPage } from '../types/api'
 
 export const getGroups = () =>
-  api.get<GroupResponse[]>('/groups/').then((r) => r.data)
+  api.get<GroupPage>('/groups/').then((r) => r.data)
 
 export const createGroup = (data: {
   title: string

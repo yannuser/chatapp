@@ -20,8 +20,6 @@ export default function AppShell() {
     }
   }, [settings?.appearance?.theme, setTheme])
 
-  // Browsers only show the notification prompt in response to a user gesture,
-  // so ask on the first interaction (unless notifications are turned off).
   useEffect(() => {
     if (typeof Notification === 'undefined' || Notification.permission !== 'default') return
     if (settings && !settings.notifications.enabled) return
@@ -42,7 +40,7 @@ export default function AppShell() {
     <WebSocketProvider>
       <div className="flex h-screen overflow-hidden bg-primary">
         <Sidebar />
-        <main className="flex-1 overflow-hidden flex flex-col">
+        <main className="flex-1 overflow-hidden flex flex-col min-w-0">
           <Outlet />
         </main>
         <Toast />

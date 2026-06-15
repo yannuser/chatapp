@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { login, getMe } from '../api/auth'
 import { apiErrorDetail } from '../lib/apiError'
 import { useAuthStore } from '../stores/authStore'
@@ -7,6 +7,8 @@ import { useToastStore } from '../stores/toastStore'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const notice = (location.state as { notice?: string } | null)?.notice
   const { setAuth, setToken } = useAuthStore()
   const { addToast } = useToastStore()
   const [form, setForm] = useState({ login: '', password: '' })
@@ -37,6 +39,12 @@ export default function LoginPage() {
           <p className="text-secondary text-sm mt-1">Sign in to your account</p>
         </div>
 
+        {notice && (
+          <p className="text-sm text-primary text-center bg-secondary rounded-lg px-4 py-3 border border-default">
+            {notice}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
@@ -54,6 +62,11 @@ export default function LoginPage() {
             autoComplete="current-password"
             className="w-full bg-secondary text-primary placeholder:text-secondary text-sm rounded-lg px-4 py-3 border border-default focus:border-accent outline-none transition-colors"
           />
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-xs text-secondary hover:text-primary transition-colors">
+              Forgot password?
+            </Link>
+          </div>
           <button
             type="submit"
             disabled={loading || !form.login.trim() || !form.password}

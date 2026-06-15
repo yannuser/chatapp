@@ -1,8 +1,8 @@
 import api from './client'
-import type { ConversationResponse } from '../types/api'
+import type { ConversationResponse, ConversationPage } from '../types/api'
 
 export const getConversations = () =>
-  api.get<ConversationResponse[]>('/conversations/').then((r) => r.data)
+  api.get<ConversationPage>('/conversations/').then((r) => r.data)
 
 export const createConversation = (member_ids: [string, string]) =>
   api.post<ConversationResponse>('/conversations/', { member_ids }).then((r) => r.data)

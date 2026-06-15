@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from core.security import get_current_user
-from schemas.contact import ContactAdd, ContactCreate, ContactResponse
+from schemas.contact import ContactAdd, ContactCreate, ContactResponse, ContactPage
 from services.contact import (
     add_contact,
     create_contact_list,
@@ -19,9 +19,13 @@ def create_contact_list_endpoint(contact_list: ContactCreate, current_user=Depen
     return create_contact_list(contact_list)
 
 
-@router.get("/", response_model=ContactResponse)
-def get_contacts_endpoint(current_user=Depends(get_current_user)):
-    return get_contacts(str(current_user.id))
+@router.get("/", response_model=ContactPage)
+def get_contacts_endpoint(
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    current_user=Depends(get_current_user),
+):
+    return get_contacts(str(current_user.id), limit=limit, offset=offset)
 
 
 @router.post("/add", response_model=ContactResponse)

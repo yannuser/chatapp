@@ -11,11 +11,11 @@ class ConversationCreate(BaseModel):
 
 
 class LastMessagePreview(BaseModel):
-    """Slim message summary for list views (sidebar previews)."""
     id: str
     content: str
     sender_id: str
     sent_at: datetime
+    is_deleted: bool = False
 
 
 class ConversationResponse(BaseModel):
@@ -32,3 +32,8 @@ class ConversationResponse(BaseModel):
         if isinstance(value, str):
             return value
         return str(value)
+
+
+class ConversationPage(BaseModel):
+    conversations: List[ConversationResponse]
+    next_cursor: Optional[str] = None

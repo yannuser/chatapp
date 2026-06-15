@@ -1,8 +1,8 @@
 import api from './client'
-import type { ContactResponse } from '../types/api'
+import type { ContactResponse, ContactPage } from '../types/api'
 
 export const getContacts = () =>
-  api.get<ContactResponse>('/contacts/').then((r) => r.data)
+  api.get<ContactPage>('/contacts/').then((r) => r.data)
 
 export const addContact = (contact_id: string) =>
   api.post<ContactResponse>('/contacts/add', { contact_id }).then((r) => r.data)

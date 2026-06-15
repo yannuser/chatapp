@@ -21,18 +21,30 @@ async_redis_client = (
 
 
 def blacklist_token(jti: str, expire_seconds: int):
-    """
-    Adds a token identifier (jti) to the blacklist with an expiration time.
-    """
     if redis_client is None:
         return
     redis_client.setex(f"blacklist:{jti}", expire_seconds, "true")
 
 
 def is_token_blacklisted(jti: str) -> bool:
-    """
-    Checks if a token identifier (jti) exists in the blacklist.
-    """
     if redis_client is None:
         return False
     return redis_client.exists(f"blacklist:{jti}") > 0
+
+
+def store_reset_token(token: str, user_id: str, expire_seconds: int):
+    if redis_client is None:
+        return
+    redis_client.setex(f"reset:{token}", expire_seconds, user_id)
+
+
+def get_reset_token_user_id(token: str) -> str | None:
+    if redis_client is None:
+        return None
+    return redis_client.get(f"reset:{token}")
+
+
+def delete_reset_token(token: str):
+    if redis_client is None:
+        return
+    redis_client.delete(f"reset:{token}")

@@ -1,14 +1,31 @@
-from mongoengine import Document, StringField, DateTimeField, ReferenceField, CASCADE
+from mongoengine import (
+    Document, StringField, DateTimeField, ReferenceField, CASCADE,
+    BooleanField, EmbeddedDocument, EmbeddedDocumentField, ListField,
+)
 from datetime import datetime, timezone
-import models.user as User
-import models.conversation as Conversation
+
+
+class EditEntry(EmbeddedDocument):
+    content = StringField(required=True)
+    edited_at = DateTimeField(required=True)
+
+
+class Reaction(EmbeddedDocument):
+    emoji = StringField(required=True, max_length=10)
+    user_ids = ListField(StringField(), default=list)
+
 
 class DirectMessage(Document):
     content = StringField(required=True, max_length=3000)
     sender = ReferenceField("User", reverse_delete_rule=CASCADE, required=True)
     linked_conversation = ReferenceField("Conversation", required=True)
+    reply_to = ReferenceField("DirectMessage", required=False)
     sent_at = DateTimeField(default=lambda: datetime.now(timezone.utc), required=True)
     updated_at = DateTimeField(required=False)
+    is_deleted = BooleanField(default=False)
+    deleted_at = DateTimeField(required=False)
+    edits = ListField(EmbeddedDocumentField(EditEntry), default=list)
+    reactions = ListField(EmbeddedDocumentField(Reaction), default=list)
 
     def clean(self):
         if not self.sent_at:

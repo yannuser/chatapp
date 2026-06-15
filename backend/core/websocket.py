@@ -1,8 +1,9 @@
 import json
 import asyncio
 import logging
+from datetime import datetime, timezone
 from fastapi import WebSocket
-from typing import Dict, List
+from typing import Dict, List, Optional
 from core.redis import async_redis_client
 
 logger = logging.getLogger("websocket_manager")
@@ -11,6 +12,7 @@ logger = logging.getLogger("websocket_manager")
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
+        self.last_disconnect: Dict[str, datetime] = {}
         self.redis_client = async_redis_client
         self.pubsub = None
         self._listener_task = None
@@ -60,6 +62,10 @@ class ConnectionManager:
             ]
             if not self.active_connections[user_id]:
                 del self.active_connections[user_id]
+                self.last_disconnect[user_id] = datetime.now(timezone.utc)
+
+    def pop_last_disconnect(self, user_id: str) -> Optional[datetime]:
+        return self.last_disconnect.pop(user_id, None)
 
     def is_connected(self, user_id: str) -> bool:
         return bool(self.active_connections.get(user_id))

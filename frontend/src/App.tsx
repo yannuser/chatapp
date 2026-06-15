@@ -6,6 +6,8 @@ import { refresh, getMe } from './api/auth'
 import AppShell from './pages/AppShell'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import SettingsPage from './pages/SettingsPage'
 import ChatPanel from './components/chat/ChatPanel'
 
@@ -49,7 +51,6 @@ export default function App() {
     }
 
     bootstrap()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (status === 'loading') {
@@ -66,6 +67,14 @@ export default function App() {
         <Route
           path="/register"
           element={<GuestRoute><RegisterPage /></GuestRoute>}
+        />
+        <Route
+          path="/forgot-password"
+          element={<GuestRoute><ForgotPasswordPage /></GuestRoute>}
+        />
+        <Route
+          path="/reset-password"
+          element={<GuestRoute><ResetPasswordPage /></GuestRoute>}
         />
         <Route
           path="/"

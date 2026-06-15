@@ -14,6 +14,7 @@ export interface LastMessagePreview {
   content: string
   sender_id: string
   sent_at: string
+  is_deleted?: boolean
 }
 
 export interface ConversationResponse {
@@ -24,6 +25,28 @@ export interface ConversationResponse {
   last_message?: LastMessagePreview | null
 }
 
+export interface ConversationPage {
+  conversations: ConversationResponse[]
+  next_cursor: string | null
+}
+
+export interface EditEntry {
+  content: string
+  edited_at: string
+}
+
+export interface ReplyPreview {
+  id: string
+  content: string
+  sender_name: string
+  is_deleted?: boolean
+}
+
+export interface ReactionGroup {
+  emoji: string
+  user_ids: string[]
+}
+
 export interface DirectMessageResponse {
   id: string
   content: string
@@ -31,12 +54,16 @@ export interface DirectMessageResponse {
   linked_conversation: ConversationResponse
   sent_at: string
   updated_at?: string
+  is_deleted?: boolean
+  deleted_at?: string
+  reply_to?: ReplyPreview | null
+  edits?: EditEntry[]
+  reactions?: ReactionGroup[]
 }
 
 export interface DirectMessagePage {
   messages: DirectMessageResponse[]
   next_cursor: string | null
-  /** Other members' last-read timestamps (privacy-gated), for read receipts. */
   last_read?: Record<string, string> | null
 }
 
@@ -51,6 +78,11 @@ export interface GroupResponse {
   last_message?: LastMessagePreview | null
 }
 
+export interface GroupPage {
+  groups: GroupResponse[]
+  next_cursor: string | null
+}
+
 export interface GroupMessageResponse {
   id: string
   group: GroupResponse
@@ -58,6 +90,11 @@ export interface GroupMessageResponse {
   sender: UserResponse
   sent_at: string
   updated_at?: string
+  is_deleted?: boolean
+  deleted_at?: string
+  reply_to?: ReplyPreview | null
+  edits?: EditEntry[]
+  reactions?: ReactionGroup[]
 }
 
 export interface GroupMessagePage {
@@ -71,6 +108,23 @@ export interface ContactResponse {
   contacts: UserResponse[]
   created_at: string
   updated_at?: string
+}
+
+export interface ContactPage {
+  contacts: UserResponse[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export interface MessageSearchResult {
+  id: string
+  content: string
+  sender_name: string
+  sent_at: string
+  room_type: 'dm' | 'group'
+  room_id: string
+  room_name: string
 }
 
 export interface NotificationSettings {
@@ -109,10 +163,10 @@ export interface TokenResponse {
 export type WsEvent =
   | ({ type: 'new_direct_message' } & DirectMessageResponse)
   | ({ type: 'updated_direct_message' } & DirectMessageResponse)
-  | { type: 'deleted_direct_message'; id: string; conversation_id: string }
+  | ({ type: 'deleted_direct_message' } & DirectMessageResponse)
   | ({ type: 'new_group_message' } & GroupMessageResponse)
   | ({ type: 'updated_group_message' } & GroupMessageResponse)
-  | { type: 'deleted_group_message'; id: string; group_id: string }
+  | ({ type: 'deleted_group_message' } & GroupMessageResponse)
   | { type: 'read_receipt'; conversation_id: string; user_id: string; read_at: string }
   | { type: 'typing'; conversation_id: string; user_id: string; is_typing: boolean }
   | { type: 'typing_group'; group_id: string; user_id: string; is_typing: boolean }
